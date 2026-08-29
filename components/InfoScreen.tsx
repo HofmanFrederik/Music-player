@@ -12,12 +12,14 @@ interface InfoScreenProps {
 }
 
 /**
- * Figma node 1:96 ("Background - album cover"). Positions measured from the
- * rendered 844x390 screenshot: album cover left 8.4% / top 107px, sized
- * ~172px; text column starts at left 33.5%, vertically centered against the
- * cover. The raw Figma export renders sideways outside Figma's own frame
- * rotation, so this is a from-scratch reproduction using those anchors
- * rather than a port of the exported markup.
+ * Figma node 1:96 ("Background - album cover"), adapted per user feedback
+ * after the initial pixel-measured build: cover+text row is anchored at a
+ * fixed top-[80px] rather than vertically centered, because centering
+ * pushed the cover into the bottom action bar once that grew to three rows
+ * (icons row / bar / time labels). The raw Figma export renders sideways
+ * outside Figma's own frame rotation, so this is a from-scratch
+ * reproduction using measured anchors rather than a port of the exported
+ * markup.
  */
 export function InfoScreen({
   result,
@@ -30,7 +32,7 @@ export function InfoScreen({
     <div className="relative flex-1 w-full overflow-hidden">
       <BlurredBackground src={result.coverUrl ?? undefined} blurPx={72} />
 
-      <div className="absolute left-[8.8%] right-[8.8%] top-1/2 flex -translate-y-1/2 items-center gap-6">
+      <div className="absolute left-[8.8%] right-[8.8%] top-[80px] flex items-center gap-6">
         <div className="relative h-[172px] w-[172px] shrink-0 overflow-hidden rounded-lg bg-white/20">
           {result.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- arbitrary external host (Deezer via ACRCloud), can't be enumerated in next.config

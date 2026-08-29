@@ -8,6 +8,7 @@ interface InfoScreenProps {
   onToggleLyrics: () => void;
   lyricsDisabled?: boolean;
   progress: number;
+  positionMs: number;
 }
 
 /**
@@ -18,7 +19,13 @@ interface InfoScreenProps {
  * rotation, so this is a from-scratch reproduction using those anchors
  * rather than a port of the exported markup.
  */
-export function InfoScreen({ result, onToggleLyrics, lyricsDisabled, progress }: InfoScreenProps) {
+export function InfoScreen({
+  result,
+  onToggleLyrics,
+  lyricsDisabled,
+  progress,
+  positionMs,
+}: InfoScreenProps) {
   return (
     <div className="relative flex-1 w-full overflow-hidden">
       <BlurredBackground src={result.coverUrl ?? undefined} blurPx={72} />
@@ -70,6 +77,7 @@ export function InfoScreen({ result, onToggleLyrics, lyricsDisabled, progress }:
         onToggleLyrics={onToggleLyrics}
         lyricsDisabled={lyricsDisabled}
         progress={progress}
+        timeLabels={{ positionMs, durationMs: result.durationMs }}
       />
     </div>
   );

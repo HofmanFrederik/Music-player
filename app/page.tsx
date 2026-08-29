@@ -10,6 +10,7 @@ import { BlurredBackground } from "@/components/BlurredBackground";
 import { useAudioCapture } from "@/hooks/useAudioCapture";
 import { useIdleArtwork } from "@/hooks/useIdleArtwork";
 import { useTrackTimer } from "@/hooks/useTrackTimer";
+import { useBackgroundRecognition } from "@/hooks/useBackgroundRecognition";
 import type { LyricLine, RecognitionResult } from "@/lib/types";
 
 type RecognitionState =
@@ -172,11 +173,57 @@ function ResultView({
   }
 
   return (
-    <TrackView
-      result={recognition.result}
-      recordedAt={recordedAt}
-      respondedAt={recognition.respondedAt}
+    <TrackController
+      initialResult={recognition.result}
+      initialRecordedAt={recordedAt}
+      initialRespondedAt={recognition.respondedAt}
       onRetry={onRetry}
+    />
+  );
+}
+
+interface Match {
+  result: RecognitionResult;
+  recordedAt: number;
+  respondedAt: number;
+}
+
+// Owns "which match is currently on screen" so a song change detected in
+// the background can swap it out. TrackView below is remounted (via key)
+// whenever the match changes, giving it a clean timer/lyrics-fetch/view
+// state for the new track instead of trying to reset all of that by hand.
+function TrackController({
+  initialResult,
+  initialRecordedAt,
+  initialRespondedAt,
+  onRetry,
+}: {
+  initialResult: RecognitionResult;
+  initialRecordedAt: number;
+  initialRespondedAt: number;
+  onRetry: () => void;
+}) {
+  const [match, setMatch] = useState<Match>({
+    result: initialResult,
+    recordedAt: initialRecordedAt,
+    respondedAt: initialRespondedAt,
+  });
+
+  const handleSongChanged = useCallback(
+    (result: RecognitionResult, recordedAt: number, respondedAt: number) => {
+      setMatch({ result, recordedAt, respondedAt });
+    },
+    []
+  );
+
+  return (
+    <TrackView
+      key={`${match.result.title}::${match.result.artist}::${match.recordedAt}`}
+      result={match.result}
+      recordedAt={match.recordedAt}
+      respondedAt={match.respondedAt}
+      onRetry={onRetry}
+      onSongChanged={handleSongChanged}
     />
   );
 }
@@ -186,11 +233,13 @@ function TrackView({
   recordedAt,
   respondedAt,
   onRetry,
+  onSongChanged,
 }: {
   result: RecognitionResult;
   recordedAt: number;
   respondedAt: number;
   onRetry: () => void;
+  onSongChanged: (result: RecognitionResult, recordedAt: number, respondedAt: number) => void;
 }) {
   const [view, setView] = useState<"info" | "lyrics">("info");
   const { positionMs, progress, finished } = useTrackTimer({
@@ -202,6 +251,11 @@ function TrackView({
   // Fetched once in the background as soon as we have a match, so it's
   // already there the moment the user toggles to the lyrics view.
   const lyrics = useLyrics(result.artist, result.title, result.durationMs);
+
+  // While this match is showing, keep quietly re-sampling in the
+  // background so a song change (skip, next track starting) is caught
+  // instead of waiting for the estimated duration timer to run out.
+  useBackgroundRecognition(result, onSongChanged);
 
   // Spec: once the estimated position runs past the track's duration, the
   // song is over — go back to idle (which resumes listening) rather than
@@ -233,6 +287,7 @@ function TrackView({
       onToggleLyrics={() => setView("lyrics")}
       lyricsDisabled={lyricsDisabled}
       progress={progress}
+      positionMs={positionMs}
     />
   );
 }

@@ -75,37 +75,44 @@ export function BottomActionBar({
   const spotifyUrl = spotifyTrackId ? `https://open.spotify.com/track/${spotifyTrackId}` : null;
 
   return (
-    <div className="absolute bottom-[32px] left-[8.8%] right-[8.8%] flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <ExternalIconLink href={spotifyUrl} label="Voeg toe aan Spotify">
-          <CirclePlus size={32} strokeWidth={1.5} />
-        </ExternalIconLink>
+    <div className="absolute bottom-[32px] left-[8.8%] right-[8.8%]">
+      {/* Frosted-glass backdrop behind the whole icons/bar/labels cluster,
+          so it stays legible over a busy or bright album cover — extends
+          a bit past the content on every side rather than hugging it. */}
+      <div className="absolute -inset-x-4 -inset-y-3 -z-10 rounded-2xl bg-black/25 backdrop-blur-xl" />
 
-        <ExternalIconLink href={geniusSearchUrl(title, artist)} label="Meer info over dit nummer">
-          <Info size={26} strokeWidth={1.75} />
-        </ExternalIconLink>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <ExternalIconLink href={spotifyUrl} label="Voeg toe aan Spotify">
+            <CirclePlus size={32} strokeWidth={1.5} />
+          </ExternalIconLink>
 
-        <button
-          type="button"
-          onClick={onToggleLyrics}
-          disabled={lyricsDisabled}
-          aria-label="Wissel tussen info en songtekst"
-          className={`flex shrink-0 items-center justify-center text-white transition-opacity ${
-            lyricsDisabled ? "opacity-30 cursor-not-allowed" : "opacity-100 hover:opacity-80"
-          }`}
-        >
-          <Quote size={28} strokeWidth={1.75} fill={lyricsActive ? "currentColor" : "none"} />
-        </button>
-      </div>
+          <ExternalIconLink href={geniusSearchUrl(title, artist)} label="Meer info over dit nummer">
+            <Info size={26} strokeWidth={1.75} />
+          </ExternalIconLink>
 
-      <ProgressBar progress={progress} />
-
-      {timeLabels && (
-        <div className="flex items-center justify-between font-sans text-[12px] font-medium text-white">
-          <span>{formatElapsed(timeLabels.positionMs)}</span>
-          <span>{formatRemaining(timeLabels.positionMs, timeLabels.durationMs)}</span>
+          <button
+            type="button"
+            onClick={onToggleLyrics}
+            disabled={lyricsDisabled}
+            aria-label="Wissel tussen info en songtekst"
+            className={`flex shrink-0 items-center justify-center text-white transition-opacity ${
+              lyricsDisabled ? "opacity-30 cursor-not-allowed" : "opacity-100 hover:opacity-80"
+            }`}
+          >
+            <Quote size={28} strokeWidth={1.75} fill={lyricsActive ? "currentColor" : "none"} />
+          </button>
         </div>
-      )}
+
+        <ProgressBar progress={progress} />
+
+        {timeLabels && (
+          <div className="flex items-center justify-between font-sans text-[12px] font-medium text-white">
+            <span>{formatElapsed(timeLabels.positionMs)}</span>
+            <span>{formatRemaining(timeLabels.positionMs, timeLabels.durationMs)}</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

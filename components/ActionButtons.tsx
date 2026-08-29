@@ -55,6 +55,8 @@ interface BottomActionBarProps {
   spotifyTrackId: string | null;
   onToggleLyrics: () => void;
   lyricsDisabled?: boolean;
+  /** True while the Lyrics screen itself is showing, so the toggle icon renders filled. */
+  lyricsActive?: boolean;
   progress: number;
   /** Elapsed/remaining labels below the bar — shown on both Info and Lyrics. */
   timeLabels?: { positionMs: number; durationMs: number } | null;
@@ -66,6 +68,7 @@ export function BottomActionBar({
   spotifyTrackId,
   onToggleLyrics,
   lyricsDisabled = false,
+  lyricsActive = false,
   progress,
   timeLabels = null,
 }: BottomActionBarProps) {
@@ -91,7 +94,7 @@ export function BottomActionBar({
             lyricsDisabled ? "opacity-30 cursor-not-allowed" : "opacity-100 hover:opacity-80"
           }`}
         >
-          <Quote size={28} strokeWidth={1.75} />
+          <Quote size={28} strokeWidth={1.75} fill={lyricsActive ? "currentColor" : "none"} />
         </button>
       </div>
 

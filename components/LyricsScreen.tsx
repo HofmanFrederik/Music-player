@@ -115,6 +115,7 @@ export function LyricsScreen({
         artist={result.artist}
         spotifyTrackId={result.spotifyTrackId}
         onToggleLyrics={onToggleInfo}
+        lyricsActive
         progress={progress}
         timeLabels={{ positionMs, durationMs: result.durationMs }}
       />

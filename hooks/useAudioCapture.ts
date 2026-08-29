@@ -9,7 +9,7 @@ export type AudioCaptureStatus =
   | "stopped"
   | "error";
 
-const RECORD_MS = 4000;
+const RECORD_MS = 5000;
 
 // Ordered by preference. iOS Safari only supports audio/mp4 — webm/opus is
 // preferred everywhere else for smaller payloads.

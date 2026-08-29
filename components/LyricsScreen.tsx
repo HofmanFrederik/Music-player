@@ -73,7 +73,7 @@ export function LyricsScreen({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
-                className="font-sans text-[29px] font-medium leading-snug tracking-tight text-white/40"
+                className="font-sans text-[22px] font-medium leading-snug tracking-tight text-white/40"
               >
                 {synced.previous ?? ""}
               </motion.p>

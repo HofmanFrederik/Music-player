@@ -40,10 +40,10 @@ export function InfoScreen({ result, onToggleLyrics, progress }: InfoScreenProps
 
         <div className="flex flex-col justify-center gap-3">
           <div>
-            <p className="font-sans text-[32px] font-medium leading-tight text-white">
+            <p className="font-sans text-[32px] font-medium leading-tight tracking-tight text-white">
               {result.title}
             </p>
-            <p className="font-sans text-[28px] font-medium leading-tight text-white/60">
+            <p className="font-sans text-[28px] font-medium leading-tight tracking-tight text-white/60">
               {result.artist}
             </p>
           </div>

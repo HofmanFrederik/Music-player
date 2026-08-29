@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface BlurredBackgroundProps {
@@ -13,12 +12,14 @@ interface BlurredBackgroundProps {
  * Full-bleed blurred background. Renders the Figma idle gradient
  * (node 2:154, 155.56deg #121212 -> #001BA2) whenever `src` is absent,
  * so it doubles as the offline fallback for the idle art cycle and as the
- * base layer while a cover image loads or fails post-match.
+ * base layer while a cover image loads or fails post-match. The 0.25 dark
+ * overlay matches the "Background blur" layer measured identically on both
+ * the idle (2:154) and info (1:96) Figma nodes.
  */
 export function BlurredBackground({
   src,
   blurPx = 72,
-  overlayOpacity = 0.35,
+  overlayOpacity = 0.25,
 }: BlurredBackgroundProps) {
   return (
     <div
@@ -38,12 +39,11 @@ export function BlurredBackground({
             exit={{ opacity: 0 }}
             transition={{ duration: 1.4, ease: "easeInOut" }}
           >
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary external hosts (iTunes/Deezer), can't be enumerated in next.config */}
+            <img
               src={src}
               alt=""
-              fill
-              sizes="100vw"
-              className="object-cover"
+              className="h-full w-full object-cover"
               style={{ filter: `blur(${blurPx}px)`, transform: "scale(1.15)" }}
             />
           </motion.div>

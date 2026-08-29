@@ -29,7 +29,7 @@ export function IdleScreen({ onTap, recording, disabled }: IdleScreenProps) {
       className="relative flex-1 w-full overflow-hidden text-left disabled:cursor-not-allowed"
       aria-label="Tik om te herkennen welke muziek er speelt"
     >
-      <BlurredBackground src={url} blurPx={72} overlayOpacity={0.4} />
+      <BlurredBackground src={url} blurPx={72} />
 
       <div className="relative z-10 flex h-full w-full items-center pl-[8.8%] pr-6">
         <motion.p

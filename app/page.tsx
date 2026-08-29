@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { IdleScreen } from "@/components/IdleScreen";
+import { InfoScreen } from "@/components/InfoScreen";
+import { BlurredBackground } from "@/components/BlurredBackground";
+import { ActionButtons } from "@/components/ActionButtons";
 import { useAudioCapture } from "@/hooks/useAudioCapture";
 import type { RecognitionResult } from "@/lib/types";
 
@@ -10,9 +14,9 @@ type RecognitionState =
   | { status: "success"; result: RecognitionResult }
   | { status: "error"; message: string };
 
-// Takes a required, stable Blob: RecognitionDebugView only mounts once a
-// recording finishes and remounts fresh next time, so "loading" as the
-// initial state (rather than set via an effect) is always correct.
+// Takes a required, stable Blob: ResultView only mounts once a recording
+// finishes and remounts fresh next time, so "loading" as the initial state
+// (rather than set via an effect) is always correct.
 function useRecognition(blob: Blob) {
   const [state, setState] = useState<RecognitionState>({ status: "loading" });
 
@@ -65,11 +69,7 @@ export default function Home() {
       )}
 
       {capture.status === "stopped" && capture.blob && (
-        <RecognitionDebugView
-          blob={capture.blob}
-          mimeType={capture.mimeType}
-          onRetry={capture.reset}
-        />
+        <ResultView blob={capture.blob} onRetry={capture.reset} />
       )}
 
       {capture.status === "error" && (
@@ -79,50 +79,54 @@ export default function Home() {
   );
 }
 
-// Temporary M2 acceptance UI: proves the signed ACRCloud call works end to
-// end by dumping the normalized JSON result. Gets replaced by the real
-// Info/Lyrics screens in M3.
-function RecognitionDebugView({
-  blob,
-  mimeType,
-  onRetry,
-}: {
-  blob: Blob;
-  mimeType: string | null;
-  onRetry: () => void;
-}) {
+function ResultView({ blob, onRetry }: { blob: Blob; onRetry: () => void }) {
   const recognition = useRecognition(blob);
-  const url = useMemo(() => URL.createObjectURL(blob), [blob]);
-  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+  const [view, setView] = useState<"info" | "lyrics">("info");
+  // Timer + real position land in M4 — static for now.
+  const progress = 0;
+
+  if (recognition.status === "loading") {
+    return <LoadingState />;
+  }
+
+  if (recognition.status === "error") {
+    return <ErrorState message={recognition.message} onRetry={onRetry} />;
+  }
+
+  const { result } = recognition;
+
+  if (view === "lyrics") {
+    return (
+      <div className="relative flex-1 w-full overflow-hidden">
+        <BlurredBackground src={result.coverUrl ?? undefined} />
+        <div className="relative z-10 flex h-full w-full items-center justify-center">
+          <p className="text-sm text-white/60">Songtekst volgt in M5.</p>
+        </div>
+        <ActionButtons
+          youtubeVideoId={result.youtubeVideoId}
+          spotifyTrackId={result.spotifyTrackId}
+          onToggleLyrics={() => setView("info")}
+          progress={progress}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto bg-black px-6 py-6 text-center text-white">
-      <p className="text-xs text-white/50">
-        Opname &mdash; {mimeType ?? "onbekend formaat"}, {(blob.size / 1024).toFixed(0)} KB
-      </p>
-      <audio controls src={url} className="w-full max-w-xs" />
+    <InfoScreen result={result} onToggleLyrics={() => setView("lyrics")} progress={progress} />
+  );
+}
 
-      {recognition.status === "loading" && (
-        <p className="text-sm text-white/70">Herkennen&hellip;</p>
-      )}
-
-      {recognition.status === "success" && (
-        <pre className="w-full max-w-lg overflow-x-auto rounded-lg bg-white/5 p-4 text-left text-xs text-emerald-300">
-          {JSON.stringify(recognition.result, null, 2)}
-        </pre>
-      )}
-
-      {recognition.status === "error" && (
-        <p className="max-w-md text-sm text-red-300">{recognition.message}</p>
-      )}
-
-      <button
-        type="button"
-        onClick={onRetry}
-        className="rounded-full border border-white/30 px-5 py-2 text-sm text-white"
+function LoadingState() {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-black">
+      <motion.p
+        className="text-sm text-white/70"
+        animate={{ opacity: [0.4, 1, 0.4] }}
+        transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
       >
-        Opnieuw opnemen
-      </button>
+        Herkennen&hellip;
+      </motion.p>
     </div>
   );
 }

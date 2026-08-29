@@ -12,6 +12,7 @@ import { useAudioCapture } from "@/hooks/useAudioCapture";
 import { useIdleArtwork } from "@/hooks/useIdleArtwork";
 import { useTrackTimer } from "@/hooks/useTrackTimer";
 import { useBackgroundRecognition } from "@/hooks/useBackgroundRecognition";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import { BASE_PATH } from "@/lib/base-path";
 import type { LyricLine, RecognitionResult } from "@/lib/types";
 
@@ -117,6 +118,10 @@ export default function Home() {
   const [toast, setToast] = useState<string | null>(null);
 
   const notify = useCallback((message: string) => setToast(message), []);
+
+  // Screen must stay on for the whole session — the app is always
+  // listening, and the device's normal auto-lock would defeat that.
+  useWakeLock();
 
   // Always listening: as soon as we're idle (first load, or right after a
   // failed/finished attempt) start recording again automatically — no tap

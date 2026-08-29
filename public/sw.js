@@ -1,4 +1,4 @@
-const CACHE_NAME = "music-recognizer-v1";
+const CACHE_NAME = "music-recognizer-v2";
 const APP_SHELL = ["/", "/manifest.json"];
 
 self.addEventListener("install", (event) => {

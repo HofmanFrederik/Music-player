@@ -8,7 +8,7 @@ export function ProgressBar({ progress, className = "" }: ProgressBarProps) {
   const clamped = Math.min(1, Math.max(0, progress));
 
   return (
-    <div className={`h-[4px] rounded-full bg-white/25 ${className}`}>
+    <div className={`h-[7px] rounded-full bg-white/25 ${className}`}>
       <div
         className="h-full rounded-full bg-white"
         style={{ width: `${clamped * 100}%` }}

@@ -50,30 +50,48 @@ export function HistoryScreen({ entries, onClose, onClear }: HistoryScreenProps)
           <p className="font-sans text-[14px] text-white/50">Nog geen nummers herkend.</p>
         ) : (
           <ul className="flex flex-col gap-3">
-            {entries.map((entry) => (
-              <li
-                key={`${entry.title}::${entry.artist}::${entry.recognizedAt}`}
-                className="flex items-center gap-3"
-              >
-                <div className="relative h-[40px] w-[40px] shrink-0 overflow-hidden rounded-md bg-white/10">
-                  {entry.coverUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- arbitrary external host, can't be enumerated in next.config
-                    <img src={entry.coverUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <Music className="text-white/40" size={18} strokeWidth={1.5} />
+            {entries.map((entry) => {
+              const spotifyUrl = entry.spotifyTrackId
+                ? `https://open.spotify.com/track/${entry.spotifyTrackId}`
+                : null;
+              const disabled = !spotifyUrl;
+
+              return (
+                <li key={`${entry.title}::${entry.artist}::${entry.recognizedAt}`}>
+                  <a
+                    href={spotifyUrl ?? undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Zoek ${entry.title} van ${entry.artist} op Spotify`}
+                    aria-disabled={disabled}
+                    onClick={(event) => {
+                      if (disabled) event.preventDefault();
+                    }}
+                    className={`flex items-center gap-3 rounded-lg transition-opacity ${
+                      disabled ? "cursor-not-allowed opacity-50" : "opacity-100 hover:opacity-70"
+                    }`}
+                  >
+                    <div className="relative h-[40px] w-[40px] shrink-0 overflow-hidden rounded-md bg-white/10">
+                      {entry.coverUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- arbitrary external host, can't be enumerated in next.config
+                        <img src={entry.coverUrl} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <Music className="text-white/40" size={18} strokeWidth={1.5} />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-sans text-[15px] font-medium text-white">{entry.title}</p>
-                  <p className="truncate font-sans text-[13px] text-white/60">{entry.artist}</p>
-                </div>
-                <span className="shrink-0 font-sans text-[11px] text-white/40">
-                  {formatRelativeTime(entry.recognizedAt)}
-                </span>
-              </li>
-            ))}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-sans text-[15px] font-medium text-white">{entry.title}</p>
+                      <p className="truncate font-sans text-[13px] text-white/60">{entry.artist}</p>
+                    </div>
+                    <span className="shrink-0 font-sans text-[11px] text-white/40">
+                      {formatRelativeTime(entry.recognizedAt)}
+                    </span>
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

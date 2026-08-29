@@ -116,7 +116,7 @@ function Screen({ children }: { children: ReactNode }) {
 
 export default function Home() {
   const capture = useAudioCapture();
-  const { status: captureStatus, start: startCapture } = capture;
+  const { status: captureStatus, start: startCapture, reset: resetCapture } = capture;
   const [toast, setToast] = useState<string | null>(null);
   const history = useHistory();
   const [showHistory, setShowHistory] = useState(false);
@@ -130,11 +130,19 @@ export default function Home() {
   // Always listening: as soon as we're idle (first load, or right after a
   // failed/finished attempt) start recording again automatically — no tap
   // required. The idle screen stays tappable too, as a manual nudge.
+  // Paused while History is open — the user asked for it to genuinely stop
+  // listening while browsing past matches, not just skip the next cycle.
   useEffect(() => {
-    if (captureStatus === "idle") {
+    if (captureStatus === "idle" && !showHistory) {
       startCapture();
     }
-  }, [captureStatus, startCapture]);
+  }, [captureStatus, startCapture, showHistory]);
+
+  const openHistory = useCallback(() => {
+    setShowHistory(true);
+    // Stop any in-flight recording immediately rather than letting it finish.
+    resetCapture();
+  }, [resetCapture]);
 
   const showIdle =
     capture.status === "idle" ||
@@ -160,7 +168,7 @@ export default function Home() {
               onTap={capture.start}
               recording={capture.status === "recording"}
               disabled={capture.status === "requesting-permission"}
-              onShowHistory={() => setShowHistory(true)}
+              onShowHistory={openHistory}
             />
           </Screen>
         )}
@@ -204,7 +212,7 @@ function ResultView({
   recordedAt: number;
   onRetry: () => void;
   notify: (message: string) => void;
-  onMatch: (title: string, artist: string, coverUrl: string | null) => void;
+  onMatch: (result: RecognitionResult) => void;
 }) {
   const recognition = useRecognition(blob);
 
@@ -262,7 +270,7 @@ function TrackController({
   initialRecordedAt: number;
   initialRespondedAt: number;
   onRetry: () => void;
-  onMatch: (title: string, artist: string, coverUrl: string | null) => void;
+  onMatch: (result: RecognitionResult) => void;
 }) {
   const [match, setMatch] = useState<Match>({
     result: initialResult,
@@ -310,7 +318,7 @@ function TrackView({
   onViewChange: (view: "info" | "lyrics") => void;
   onRetry: () => void;
   onSongChanged: (result: RecognitionResult, recordedAt: number, respondedAt: number) => void;
-  onMatch: (title: string, artist: string, coverUrl: string | null) => void;
+  onMatch: (result: RecognitionResult) => void;
 }) {
   const { positionMs, progress, finished } = useTrackTimer({
     durationMs: result.durationMs,
@@ -325,8 +333,8 @@ function TrackView({
   // Records this song into local history — once per distinct match, since
   // TrackView remounts fresh (new key) whenever the song changes.
   useEffect(() => {
-    onMatch(result.title, result.artist, result.coverUrl);
-  }, [onMatch, result.title, result.artist, result.coverUrl]);
+    onMatch(result);
+  }, [onMatch, result]);
 
   // While this match is showing, keep quietly re-sampling in the
   // background so a song change (skip, next track starting) is caught

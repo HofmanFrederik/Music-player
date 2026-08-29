@@ -5,6 +5,7 @@ export interface HistoryEntry {
   title: string;
   artist: string;
   coverUrl: string | null;
+  spotifyTrackId: string | null;
   recognizedAt: number;
 }
 

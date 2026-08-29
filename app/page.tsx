@@ -7,12 +7,14 @@ import { Loader2 } from "lucide-react";
 import { IdleScreen } from "@/components/IdleScreen";
 import { InfoScreen } from "@/components/InfoScreen";
 import { LyricsScreen } from "@/components/LyricsScreen";
+import { HistoryScreen } from "@/components/HistoryScreen";
 import { BlurredBackground } from "@/components/BlurredBackground";
 import { useAudioCapture } from "@/hooks/useAudioCapture";
 import { useIdleArtwork } from "@/hooks/useIdleArtwork";
 import { useTrackTimer } from "@/hooks/useTrackTimer";
 import { useBackgroundRecognition } from "@/hooks/useBackgroundRecognition";
 import { useWakeLock } from "@/hooks/useWakeLock";
+import { useHistory } from "@/hooks/useHistory";
 import { BASE_PATH } from "@/lib/base-path";
 import type { LyricLine, RecognitionResult } from "@/lib/types";
 
@@ -116,6 +118,8 @@ export default function Home() {
   const capture = useAudioCapture();
   const { status: captureStatus, start: startCapture } = capture;
   const [toast, setToast] = useState<string | null>(null);
+  const history = useHistory();
+  const [showHistory, setShowHistory] = useState(false);
 
   const notify = useCallback((message: string) => setToast(message), []);
 
@@ -140,12 +144,23 @@ export default function Home() {
   return (
     <main className="relative flex flex-1 flex-col">
       <AnimatePresence mode="wait">
-        {showIdle && (
+        {showIdle && showHistory && (
+          <Screen key="history">
+            <HistoryScreen
+              entries={history.entries}
+              onClose={() => setShowHistory(false)}
+              onClear={history.clear}
+            />
+          </Screen>
+        )}
+
+        {showIdle && !showHistory && (
           <Screen key="idle">
             <IdleScreen
               onTap={capture.start}
               recording={capture.status === "recording"}
               disabled={capture.status === "requesting-permission"}
+              onShowHistory={() => setShowHistory(true)}
             />
           </Screen>
         )}
@@ -157,6 +172,7 @@ export default function Home() {
               recordedAt={capture.recordedAt}
               onRetry={capture.reset}
               notify={notify}
+              onMatch={history.record}
             />
           </Screen>
         )}
@@ -182,11 +198,13 @@ function ResultView({
   recordedAt,
   onRetry,
   notify,
+  onMatch,
 }: {
   blob: Blob;
   recordedAt: number;
   onRetry: () => void;
   notify: (message: string) => void;
+  onMatch: (title: string, artist: string, coverUrl: string | null) => void;
 }) {
   const recognition = useRecognition(blob);
 
@@ -212,6 +230,7 @@ function ResultView({
             initialRecordedAt={recordedAt}
             initialRespondedAt={recognition.respondedAt}
             onRetry={onRetry}
+            onMatch={onMatch}
           />
         </Screen>
       )}
@@ -237,11 +256,13 @@ function TrackController({
   initialRecordedAt,
   initialRespondedAt,
   onRetry,
+  onMatch,
 }: {
   initialResult: RecognitionResult;
   initialRecordedAt: number;
   initialRespondedAt: number;
   onRetry: () => void;
+  onMatch: (title: string, artist: string, coverUrl: string | null) => void;
 }) {
   const [match, setMatch] = useState<Match>({
     result: initialResult,
@@ -267,6 +288,7 @@ function TrackController({
       onViewChange={setView}
       onRetry={onRetry}
       onSongChanged={handleSongChanged}
+      onMatch={onMatch}
     />
   );
 }
@@ -279,6 +301,7 @@ function TrackView({
   onViewChange,
   onRetry,
   onSongChanged,
+  onMatch,
 }: {
   result: RecognitionResult;
   recordedAt: number;
@@ -287,6 +310,7 @@ function TrackView({
   onViewChange: (view: "info" | "lyrics") => void;
   onRetry: () => void;
   onSongChanged: (result: RecognitionResult, recordedAt: number, respondedAt: number) => void;
+  onMatch: (title: string, artist: string, coverUrl: string | null) => void;
 }) {
   const { positionMs, progress, finished } = useTrackTimer({
     durationMs: result.durationMs,
@@ -297,6 +321,12 @@ function TrackView({
   // Fetched once in the background as soon as we have a match, so it's
   // already there the moment the user toggles to the lyrics view.
   const lyrics = useLyrics(result.artist, result.title, result.durationMs);
+
+  // Records this song into local history — once per distinct match, since
+  // TrackView remounts fresh (new key) whenever the song changes.
+  useEffect(() => {
+    onMatch(result.title, result.artist, result.coverUrl);
+  }, [onMatch, result.title, result.artist, result.coverUrl]);
 
   // While this match is showing, keep quietly re-sampling in the
   // background so a song change (skip, next track starting) is caught

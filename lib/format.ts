@@ -14,3 +14,15 @@ export function formatElapsed(positionMs: number): string {
 export function formatRemaining(positionMs: number, durationMs: number): string {
   return `-${toMinutesSeconds(durationMs - positionMs)}`;
 }
+
+/** "net nu" / "5m geleden" / "3u geleden" / "2d geleden" */
+export function formatRelativeTime(timestampMs: number): string {
+  const diffMs = Date.now() - timestampMs;
+  const minutes = Math.floor(diffMs / 60_000);
+  if (minutes < 1) return "net nu";
+  if (minutes < 60) return `${minutes}m geleden`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}u geleden`;
+  const days = Math.floor(hours / 24);
+  return `${days}d geleden`;
+}

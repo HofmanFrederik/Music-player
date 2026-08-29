@@ -222,8 +222,11 @@ interface Match {
 
 // Owns "which match is currently on screen" so a song change detected in
 // the background can swap it out. TrackView below is remounted (via key)
-// whenever the match changes, giving it a clean timer/lyrics-fetch/view
-// state for the new track instead of trying to reset all of that by hand.
+// whenever the match changes, giving it a clean timer/lyrics-fetch state
+// for the new track instead of trying to reset all of that by hand. `view`
+// (info vs. lyrics) is owned here instead, so it survives that remount —
+// if lyrics were showing when the song changed, the new song opens
+// straight on its lyrics too, instead of resetting to info.
 function TrackController({
   initialResult,
   initialRecordedAt,
@@ -240,6 +243,7 @@ function TrackController({
     recordedAt: initialRecordedAt,
     respondedAt: initialRespondedAt,
   });
+  const [view, setView] = useState<"info" | "lyrics">("info");
 
   const handleSongChanged = useCallback(
     (result: RecognitionResult, recordedAt: number, respondedAt: number) => {
@@ -254,6 +258,8 @@ function TrackController({
       result={match.result}
       recordedAt={match.recordedAt}
       respondedAt={match.respondedAt}
+      view={view}
+      onViewChange={setView}
       onRetry={onRetry}
       onSongChanged={handleSongChanged}
     />
@@ -264,16 +270,19 @@ function TrackView({
   result,
   recordedAt,
   respondedAt,
+  view,
+  onViewChange,
   onRetry,
   onSongChanged,
 }: {
   result: RecognitionResult;
   recordedAt: number;
   respondedAt: number;
+  view: "info" | "lyrics";
+  onViewChange: (view: "info" | "lyrics") => void;
   onRetry: () => void;
   onSongChanged: (result: RecognitionResult, recordedAt: number, respondedAt: number) => void;
 }) {
-  const [view, setView] = useState<"info" | "lyrics">("info");
   const { positionMs, progress, finished } = useTrackTimer({
     durationMs: result.durationMs,
     playOffsetMs: result.playOffsetMs,
@@ -309,7 +318,7 @@ function TrackView({
             positionMs={positionMs}
             syncedLines={lyrics.status === "ready" ? lyrics.syncedLines : null}
             plainLyrics={lyrics.status === "ready" ? lyrics.plainLyrics : null}
-            onToggleInfo={() => setView("info")}
+            onToggleInfo={() => onViewChange("info")}
             progress={progress}
           />
         </Screen>
@@ -317,7 +326,7 @@ function TrackView({
         <Screen key="info">
           <InfoScreen
             result={result}
-            onToggleLyrics={() => setView("lyrics")}
+            onToggleLyrics={() => onViewChange("lyrics")}
             lyricsDisabled={lyricsDisabled}
             progress={progress}
             positionMs={positionMs}

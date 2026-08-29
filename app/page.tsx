@@ -12,6 +12,7 @@ import { useAudioCapture } from "@/hooks/useAudioCapture";
 import { useIdleArtwork } from "@/hooks/useIdleArtwork";
 import { useTrackTimer } from "@/hooks/useTrackTimer";
 import { useBackgroundRecognition } from "@/hooks/useBackgroundRecognition";
+import { BASE_PATH } from "@/lib/base-path";
 import type { LyricLine, RecognitionResult } from "@/lib/types";
 
 type RecognitionState =
@@ -31,7 +32,7 @@ function useRecognition(blob: Blob) {
     const formData = new FormData();
     formData.append("audio", blob, "sample");
 
-    fetch("/api/recognise", { method: "POST", body: formData })
+    fetch(`${BASE_PATH}/api/recognise`, { method: "POST", body: formData })
       .then(async (res) => {
         if (cancelled) return;
         const data = await res.json();
@@ -72,7 +73,7 @@ function useLyrics(artist: string, title: string, durationMs: number) {
       duration: String(Math.round(durationMs / 1000)),
     });
 
-    fetch(`/api/lyrics?${params.toString()}`)
+    fetch(`${BASE_PATH}/api/lyrics?${params.toString()}`)
       .then(async (res) => {
         if (cancelled) return;
         if (!res.ok) {

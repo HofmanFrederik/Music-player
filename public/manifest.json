@@ -2,27 +2,27 @@
   "name": "Music Recognizer",
   "short_name": "MusicRec",
   "description": "Herken de muziek om je heen en volg de songtekst live mee.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/music-player",
+  "scope": "/music-player",
   "display": "standalone",
   "orientation": "landscape",
   "background_color": "#05050c",
   "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/music-player/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/music-player/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512-maskable.png",
+      "src": "/music-player/icons/icon-512-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

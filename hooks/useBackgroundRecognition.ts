@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useAudioCapture } from "./useAudioCapture";
+import { BASE_PATH } from "@/lib/base-path";
 import type { RecognitionResult } from "@/lib/types";
 
 const CHECK_INTERVAL_MS = 15_000;
@@ -47,7 +48,7 @@ export function useBackgroundRecognition(
     const formData = new FormData();
     formData.append("audio", blob, "sample");
 
-    fetch("/api/recognise", { method: "POST", body: formData })
+    fetch(`${BASE_PATH}/api/recognise`, { method: "POST", body: formData })
       .then(async (res) => {
         if (cancelled || !res.ok) return;
         const result: RecognitionResult = await res.json();

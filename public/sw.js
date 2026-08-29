@@ -1,5 +1,6 @@
-const CACHE_NAME = "music-recognizer-v2";
-const APP_SHELL = ["/", "/manifest.json"];
+const CACHE_NAME = "music-recognizer-v3";
+const BASE_PATH = "/music-player";
+const APP_SHELL = [`${BASE_PATH}/`, `${BASE_PATH}/manifest.json`];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -30,11 +31,13 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
 
   // Never cache API calls: recognition and lyrics must always be live.
-  if (url.pathname.startsWith("/api/")) return;
+  if (url.pathname.startsWith(`${BASE_PATH}/api/`)) return;
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() => caches.match("/").then((res) => res || Response.error()))
+      fetch(request).catch(() =>
+        caches.match(`${BASE_PATH}/`).then((res) => res || Response.error())
+      )
     );
     return;
   }

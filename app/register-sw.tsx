@@ -15,7 +15,7 @@ export function RegisterServiceWorker() {
       return;
     }
 
-    navigator.serviceWorker.register("/sw.js").catch((error) => {
+    navigator.serviceWorker.register("/music-player/sw.js").catch((error) => {
       console.error("Service worker registratie mislukt", error);
     });
   }, []);

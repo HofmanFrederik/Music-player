@@ -12,15 +12,15 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Music Recognizer",
   description: "Herken de muziek om je heen en volg de songtekst live mee.",
-  manifest: "/manifest.json",
+  manifest: "/music-player/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Music Recognizer",
   },
   icons: {
-    icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
-    apple: [{ url: "/icons/icon-180.png", sizes: "180x180", type: "image/png" }],
+    icon: [{ url: "/music-player/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/music-player/icons/icon-180.png", sizes: "180x180", type: "image/png" }],
   },
 };
 

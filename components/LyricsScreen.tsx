@@ -110,6 +110,19 @@ export function LyricsScreen({
         )}
       </div>
 
+      {/* Progressively blurs lyric lines that grow long enough to reach the
+          bottom controls (fades from no blur to full blur going down), so
+          overflowing text softens into the bar instead of clashing under
+          it. Sits between the lyrics text and BottomActionBar in DOM order
+          so it paints over the text but under the bar's own controls. */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[170px] backdrop-blur-xl"
+        style={{
+          maskImage: "linear-gradient(to bottom, transparent, black 65%)",
+          WebkitMaskImage: "linear-gradient(to bottom, transparent, black 65%)",
+        }}
+      />
+
       <BottomActionBar
         title={result.title}
         artist={result.artist}

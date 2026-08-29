@@ -338,8 +338,10 @@ function TrackView({
 
   // While this match is showing, keep quietly re-sampling in the
   // background so a song change (skip, next track starting) is caught
-  // instead of waiting for the estimated duration timer to run out.
-  useBackgroundRecognition(result, onSongChanged);
+  // instead of waiting for the estimated duration timer to run out. Checks
+  // ramp up as the track nears its end (see the hook) so the next song is
+  // found quickly rather than up to a full interval late.
+  useBackgroundRecognition(result, result.durationMs - positionMs, onSongChanged);
 
   // Spec: once the estimated position runs past the track's duration, the
   // song is over — go back to idle (which resumes listening) rather than

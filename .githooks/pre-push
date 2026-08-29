@@ -1,0 +1,68 @@
+#!/bin/sh
+#
+# pre-push — schrijft bij elke push een changelog-entry in de Obsidian-vault.
+#
+# Installeren (één keer per clone):
+#   git config core.hooksPath .githooks
+#
+# Overslaan voor één push:  git push --no-verify
+# Uitzetten:                git config --unset core.hooksPath
+#
+# De hook faalt nooit hard: hij eindigt altijd op exit 0, zodat een probleem
+# met de vault je push niet tegenhoudt.
+
+BRIEF="/Users/frederik/Desktop/FH/Personal/Projecten/Music-player/Project-brief.md"
+ZERO="0000000000000000000000000000000000000000"
+
+[ -f "$BRIEF" ] || exit 0
+
+DATE=$(date +%Y-%m-%d)
+CLOCK=$(date +%H:%M)
+ENTRIES=""
+BRANCHES=""
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+    # branch wordt verwijderd -> niets te loggen
+    [ "$local_sha" = "$ZERO" ] && continue
+
+    branch=${local_ref#refs/heads/}
+
+    if [ "$remote_sha" = "$ZERO" ]; then
+        range="$local_sha --not --remotes=origin"
+    else
+        range="$remote_sha..$local_sha"
+    fi
+
+    # shellcheck disable=SC2086
+    log=$(git log --no-merges --pretty=format:'  - `%h` %s' $range 2>/dev/null)
+    [ -n "$log" ] || continue
+
+    BRANCHES="$BRANCHES $branch"
+    ENTRIES="$ENTRIES$log
+"
+done
+
+[ -n "$ENTRIES" ] || exit 0
+
+TMP=$(mktemp) || exit 0
+{
+    echo "### $DATE — push naar$BRANCHES ($CLOCK)"
+    echo "- **Aangepast:**"
+    printf '%s' "$ENTRIES"
+    echo "- **Waarom:** _in te vullen_"
+    echo "- **Open:** _in te vullen_"
+    echo ""
+} > "$TMP"
+
+awk -v ef="$TMP" '
+    function dump(   line) { while ((getline line < ef) > 0) print line; close(ef) }
+    /^## Changelog[ \t]*$/ { inchg = 1 }
+    inchg && !done && /^### / { dump(); done = 1 }
+    { print }
+    END { if (inchg && !done) { print ""; dump() } }
+' "$BRIEF" > "$TMP.out" 2>/dev/null && mv "$TMP.out" "$BRIEF"
+
+rm -f "$TMP" "$TMP.out"
+
+echo "obsidian: changelog bijgewerkt in Project-brief.md"
+exit 0

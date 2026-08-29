@@ -9,11 +9,12 @@ import { BlurredBackground } from "@/components/BlurredBackground";
 import { ActionButtons } from "@/components/ActionButtons";
 import { useAudioCapture } from "@/hooks/useAudioCapture";
 import { useIdleArtwork } from "@/hooks/useIdleArtwork";
+import { useTrackTimer } from "@/hooks/useTrackTimer";
 import type { RecognitionResult } from "@/lib/types";
 
 type RecognitionState =
   | { status: "loading" }
-  | { status: "success"; result: RecognitionResult }
+  | { status: "success"; result: RecognitionResult; respondedAt: number }
   | { status: "error"; message: string };
 
 // Takes a required, stable Blob: ResultView only mounts once a recording
@@ -36,7 +37,7 @@ function useRecognition(blob: Blob) {
           setState({ status: "error", message: data.error ?? `Fout (${res.status})` });
           return;
         }
-        setState({ status: "success", result: data });
+        setState({ status: "success", result: data, respondedAt: Date.now() });
       })
       .catch(() => {
         if (!cancelled) {
@@ -70,8 +71,8 @@ export default function Home() {
         />
       )}
 
-      {capture.status === "stopped" && capture.blob && (
-        <ResultView blob={capture.blob} onRetry={capture.reset} />
+      {capture.status === "stopped" && capture.blob && capture.recordedAt && (
+        <ResultView blob={capture.blob} recordedAt={capture.recordedAt} onRetry={capture.reset} />
       )}
 
       {capture.status === "error" && (
@@ -81,11 +82,16 @@ export default function Home() {
   );
 }
 
-function ResultView({ blob, onRetry }: { blob: Blob; onRetry: () => void }) {
+function ResultView({
+  blob,
+  recordedAt,
+  onRetry,
+}: {
+  blob: Blob;
+  recordedAt: number;
+  onRetry: () => void;
+}) {
   const recognition = useRecognition(blob);
-  const [view, setView] = useState<"info" | "lyrics">("info");
-  // Timer + real position land in M4 — static for now.
-  const progress = 0;
 
   if (recognition.status === "loading") {
     return <LoadingState />;
@@ -95,7 +101,40 @@ function ResultView({ blob, onRetry }: { blob: Blob; onRetry: () => void }) {
     return <ErrorState message={recognition.message} onRetry={onRetry} />;
   }
 
-  const { result } = recognition;
+  return (
+    <TrackView
+      result={recognition.result}
+      recordedAt={recordedAt}
+      respondedAt={recognition.respondedAt}
+      onRetry={onRetry}
+    />
+  );
+}
+
+function TrackView({
+  result,
+  recordedAt,
+  respondedAt,
+  onRetry,
+}: {
+  result: RecognitionResult;
+  recordedAt: number;
+  respondedAt: number;
+  onRetry: () => void;
+}) {
+  const [view, setView] = useState<"info" | "lyrics">("info");
+  const { progress, finished } = useTrackTimer({
+    durationMs: result.durationMs,
+    playOffsetMs: result.playOffsetMs,
+    recordedAt,
+    respondedAt,
+  });
+
+  // Spec: once the estimated position runs past the track's duration, the
+  // song is over — go back to idle rather than sitting on a stale screen.
+  useEffect(() => {
+    if (finished) onRetry();
+  }, [finished, onRetry]);
 
   if (view === "lyrics") {
     return (

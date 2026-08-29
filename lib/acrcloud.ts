@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { fetchCoverArtFallback } from "./cover-art";
 import type { RecognitionResult } from "./types";
 
 const HTTP_METHOD = "POST";
@@ -158,5 +159,11 @@ export async function identifyAudio(sample: Blob): Promise<RecognitionResult> {
     throw new NoMatchError();
   }
 
-  return normalize(match);
+  const result = normalize(match);
+
+  if (!result.coverUrl) {
+    result.coverUrl = await fetchCoverArtFallback(result.artist, result.title);
+  }
+
+  return result;
 }

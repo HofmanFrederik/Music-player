@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 import { IdleScreen } from "@/components/IdleScreen";
 import { InfoScreen } from "@/components/InfoScreen";
 import { BlurredBackground } from "@/components/BlurredBackground";
 import { ActionButtons } from "@/components/ActionButtons";
 import { useAudioCapture } from "@/hooks/useAudioCapture";
+import { useIdleArtwork } from "@/hooks/useIdleArtwork";
 import type { RecognitionResult } from "@/lib/types";
 
 type RecognitionState =
@@ -118,15 +120,23 @@ function ResultView({ blob, onRetry }: { blob: Blob; onRetry: () => void }) {
 }
 
 function LoadingState() {
+  // Keeps the same cycling blurred art the idle screen used, so the
+  // transition into "searching" doesn't feel like the app went blank.
+  const { url } = useIdleArtwork();
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-black">
-      <motion.p
-        className="text-sm text-white/70"
-        animate={{ opacity: [0.4, 1, 0.4] }}
-        transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-      >
-        Herkennen&hellip;
-      </motion.p>
+    <div className="relative flex-1 w-full overflow-hidden">
+      <BlurredBackground src={url} blurPx={72} />
+      <div className="relative z-10 flex h-full w-full flex-col items-center justify-center gap-4">
+        <Loader2 className="animate-spin text-white" size={40} strokeWidth={2} />
+        <motion.p
+          className="text-sm text-white/70"
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+        >
+          Herkennen&hellip;
+        </motion.p>
+      </div>
     </div>
   );
 }

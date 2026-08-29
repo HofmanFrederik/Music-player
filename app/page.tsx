@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useCallback, useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { IdleScreen } from "@/components/IdleScreen";
 import { InfoScreen } from "@/components/InfoScreen";
+import { LyricsScreen } from "@/components/LyricsScreen";
 import { BlurredBackground } from "@/components/BlurredBackground";
-import { ActionButtons } from "@/components/ActionButtons";
 import { useAudioCapture } from "@/hooks/useAudioCapture";
 import { useIdleArtwork } from "@/hooks/useIdleArtwork";
 import { useTrackTimer } from "@/hooks/useTrackTimer";
-import type { RecognitionResult } from "@/lib/types";
+import type { LyricLine, RecognitionResult } from "@/lib/types";
 
 type RecognitionState =
   | { status: "loading" }
@@ -53,8 +53,60 @@ function useRecognition(blob: Blob) {
   return state;
 }
 
+type LyricsState =
+  | { status: "loading" }
+  | { status: "ready"; syncedLines: LyricLine[] | null; plainLyrics: string | null }
+  | { status: "unavailable" };
+
+function useLyrics(artist: string, title: string, durationMs: number) {
+  const [state, setState] = useState<LyricsState>({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const params = new URLSearchParams({
+      artist_name: artist,
+      track_name: title,
+      duration: String(Math.round(durationMs / 1000)),
+    });
+
+    fetch(`/api/lyrics?${params.toString()}`)
+      .then(async (res) => {
+        if (cancelled) return;
+        if (!res.ok) {
+          setState({ status: "unavailable" });
+          return;
+        }
+        const data = await res.json();
+        setState({ status: "ready", syncedLines: data.syncedLyrics, plainLyrics: data.plainLyrics });
+      })
+      .catch(() => {
+        if (!cancelled) setState({ status: "unavailable" });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [artist, title, durationMs]);
+
+  return state;
+}
+
 export default function Home() {
   const capture = useAudioCapture();
+  const { status: captureStatus, start: startCapture } = capture;
+  const [toast, setToast] = useState<string | null>(null);
+
+  const notify = useCallback((message: string) => setToast(message), []);
+
+  // Always listening: as soon as we're idle (first load, or right after a
+  // failed/finished attempt) start recording again automatically — no tap
+  // required. The idle screen stays tappable too, as a manual nudge.
+  useEffect(() => {
+    if (captureStatus === "idle") {
+      startCapture();
+    }
+  }, [captureStatus, startCapture]);
 
   const showIdle =
     capture.status === "idle" ||
@@ -62,7 +114,7 @@ export default function Home() {
     capture.status === "recording";
 
   return (
-    <main className="flex flex-1 flex-col">
+    <main className="relative flex flex-1 flex-col">
       {showIdle && (
         <IdleScreen
           onTap={capture.start}
@@ -72,12 +124,23 @@ export default function Home() {
       )}
 
       {capture.status === "stopped" && capture.blob && capture.recordedAt && (
-        <ResultView blob={capture.blob} recordedAt={capture.recordedAt} onRetry={capture.reset} />
+        <ResultView
+          blob={capture.blob}
+          recordedAt={capture.recordedAt}
+          onRetry={capture.reset}
+          notify={notify}
+        />
       )}
 
       {capture.status === "error" && (
-        <ErrorState message={capture.error} onRetry={capture.reset} />
+        // Mic access itself is broken here — auto-retrying is pointless, and
+        // a fresh getUserMedia call needs a real user gesture, so this stays
+        // a blocking prompt (call capture.start directly, not reset, so the
+        // tap counts as that gesture) rather than a toast.
+        <ErrorState message={capture.error} onRetry={capture.start} />
       )}
+
+      <Toast message={toast} onDone={() => setToast(null)} />
     </main>
   );
 }
@@ -86,19 +149,26 @@ function ResultView({
   blob,
   recordedAt,
   onRetry,
+  notify,
 }: {
   blob: Blob;
   recordedAt: number;
   onRetry: () => void;
+  notify: (message: string) => void;
 }) {
   const recognition = useRecognition(blob);
 
-  if (recognition.status === "loading") {
-    return <LoadingState />;
-  }
+  // Spec (and product direction): never get stuck on a "no match" screen —
+  // surface it as a toast and keep listening automatically.
+  useEffect(() => {
+    if (recognition.status === "error") {
+      notify(recognition.message);
+      onRetry();
+    }
+  }, [recognition, notify, onRetry]);
 
-  if (recognition.status === "error") {
-    return <ErrorState message={recognition.message} onRetry={onRetry} />;
+  if (recognition.status === "loading" || recognition.status === "error") {
+    return <LoadingState />;
   }
 
   return (
@@ -123,38 +193,47 @@ function TrackView({
   onRetry: () => void;
 }) {
   const [view, setView] = useState<"info" | "lyrics">("info");
-  const { progress, finished } = useTrackTimer({
+  const { positionMs, progress, finished } = useTrackTimer({
     durationMs: result.durationMs,
     playOffsetMs: result.playOffsetMs,
     recordedAt,
     respondedAt,
   });
+  // Fetched once in the background as soon as we have a match, so it's
+  // already there the moment the user toggles to the lyrics view.
+  const lyrics = useLyrics(result.artist, result.title, result.durationMs);
 
   // Spec: once the estimated position runs past the track's duration, the
-  // song is over — go back to idle rather than sitting on a stale screen.
+  // song is over — go back to idle (which resumes listening) rather than
+  // sitting on a stale screen.
   useEffect(() => {
     if (finished) onRetry();
   }, [finished, onRetry]);
 
+  const hasSyncedLyrics = lyrics.status === "ready" && !!lyrics.syncedLines?.length;
+  const hasPlainLyrics = lyrics.status === "ready" && !!lyrics.plainLyrics;
+  const lyricsDisabled = lyrics.status === "unavailable" || (lyrics.status === "ready" && !hasSyncedLyrics && !hasPlainLyrics);
+
   if (view === "lyrics") {
     return (
-      <div className="relative flex-1 w-full overflow-hidden">
-        <BlurredBackground src={result.coverUrl ?? undefined} />
-        <div className="relative z-10 flex h-full w-full items-center justify-center">
-          <p className="text-sm text-white/60">Songtekst volgt in M5.</p>
-        </div>
-        <ActionButtons
-          youtubeVideoId={result.youtubeVideoId}
-          spotifyTrackId={result.spotifyTrackId}
-          onToggleLyrics={() => setView("info")}
-          progress={progress}
-        />
-      </div>
+      <LyricsScreen
+        result={result}
+        positionMs={positionMs}
+        syncedLines={lyrics.status === "ready" ? lyrics.syncedLines : null}
+        plainLyrics={lyrics.status === "ready" ? lyrics.plainLyrics : null}
+        onToggleInfo={() => setView("info")}
+        progress={progress}
+      />
     );
   }
 
   return (
-    <InfoScreen result={result} onToggleLyrics={() => setView("lyrics")} progress={progress} />
+    <InfoScreen
+      result={result}
+      onToggleLyrics={() => setView("lyrics")}
+      lyricsDisabled={lyricsDisabled}
+      progress={progress}
+    />
   );
 }
 
@@ -191,6 +270,32 @@ function ErrorState({ message, onRetry }: { message: string | null; onRetry: () 
       >
         Probeer opnieuw
       </button>
+    </div>
+  );
+}
+
+function Toast({ message, onDone }: { message: string | null; onDone: () => void }) {
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(onDone, 2800);
+    return () => clearTimeout(timer);
+  }, [message, onDone]);
+
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-4 z-50 flex justify-center px-6">
+      <AnimatePresence>
+        {message && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.25 }}
+            className="rounded-full bg-black/80 px-4 py-2 text-xs text-white/90 shadow-lg"
+          >
+            {message}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

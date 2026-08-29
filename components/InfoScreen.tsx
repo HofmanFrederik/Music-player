@@ -103,6 +103,8 @@ export function InfoScreen({
       </div>
 
       <ActionButtons
+        title={result.title}
+        artist={result.artist}
         youtubeVideoId={result.youtubeVideoId}
         spotifyTrackId={result.spotifyTrackId}
         onToggleLyrics={onToggleLyrics}

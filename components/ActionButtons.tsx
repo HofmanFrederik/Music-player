@@ -50,7 +50,7 @@ interface BottomActionBarProps {
   onToggleLyrics: () => void;
   lyricsDisabled?: boolean;
   progress: number;
-  /** Info screen only, per the latest Figma revision — Lyrics screen omits this row. */
+  /** Elapsed/remaining labels below the bar — shown on both Info and Lyrics. */
   timeLabels?: { positionMs: number; durationMs: number } | null;
 }
 

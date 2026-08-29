@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { IdleScreen } from "@/components/IdleScreen";
@@ -93,6 +94,22 @@ function useLyrics(artist: string, title: string, durationMs: number) {
   return state;
 }
 
+// Shared crossfade used everywhere the app switches between full screens
+// (idle/result/error, loading/track, info/lyrics) so nothing just snaps.
+function Screen({ children }: { children: ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.985 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.985 }}
+      transition={{ duration: 0.35, ease: "easeInOut" }}
+      className="flex flex-1 flex-col"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export default function Home() {
   const capture = useAudioCapture();
   const { status: captureStatus, start: startCapture } = capture;
@@ -116,30 +133,38 @@ export default function Home() {
 
   return (
     <main className="relative flex flex-1 flex-col">
-      {showIdle && (
-        <IdleScreen
-          onTap={capture.start}
-          recording={capture.status === "recording"}
-          disabled={capture.status === "requesting-permission"}
-        />
-      )}
+      <AnimatePresence mode="wait">
+        {showIdle && (
+          <Screen key="idle">
+            <IdleScreen
+              onTap={capture.start}
+              recording={capture.status === "recording"}
+              disabled={capture.status === "requesting-permission"}
+            />
+          </Screen>
+        )}
 
-      {capture.status === "stopped" && capture.blob && capture.recordedAt && (
-        <ResultView
-          blob={capture.blob}
-          recordedAt={capture.recordedAt}
-          onRetry={capture.reset}
-          notify={notify}
-        />
-      )}
+        {capture.status === "stopped" && capture.blob && capture.recordedAt && (
+          <Screen key="result">
+            <ResultView
+              blob={capture.blob}
+              recordedAt={capture.recordedAt}
+              onRetry={capture.reset}
+              notify={notify}
+            />
+          </Screen>
+        )}
 
-      {capture.status === "error" && (
-        // Mic access itself is broken here — auto-retrying is pointless, and
-        // a fresh getUserMedia call needs a real user gesture, so this stays
-        // a blocking prompt (call capture.start directly, not reset, so the
-        // tap counts as that gesture) rather than a toast.
-        <ErrorState message={capture.error} onRetry={capture.start} />
-      )}
+        {capture.status === "error" && (
+          // Mic access itself is broken here — auto-retrying is pointless, and
+          // a fresh getUserMedia call needs a real user gesture, so this stays
+          // a blocking prompt (call capture.start directly, not reset, so the
+          // tap counts as that gesture) rather than a toast.
+          <Screen key="capture-error">
+            <ErrorState message={capture.error} onRetry={capture.start} />
+          </Screen>
+        )}
+      </AnimatePresence>
 
       <Toast message={toast} onDone={() => setToast(null)} />
     </main>
@@ -168,17 +193,23 @@ function ResultView({
     }
   }, [recognition, notify, onRetry]);
 
-  if (recognition.status === "loading" || recognition.status === "error") {
-    return <LoadingState />;
-  }
-
   return (
-    <TrackController
-      initialResult={recognition.result}
-      initialRecordedAt={recordedAt}
-      initialRespondedAt={recognition.respondedAt}
-      onRetry={onRetry}
-    />
+    <AnimatePresence mode="wait">
+      {recognition.status === "loading" || recognition.status === "error" ? (
+        <Screen key="loading">
+          <LoadingState />
+        </Screen>
+      ) : (
+        <Screen key="track">
+          <TrackController
+            initialResult={recognition.result}
+            initialRecordedAt={recordedAt}
+            initialRespondedAt={recognition.respondedAt}
+            onRetry={onRetry}
+          />
+        </Screen>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -268,27 +299,31 @@ function TrackView({
   const hasPlainLyrics = lyrics.status === "ready" && !!lyrics.plainLyrics;
   const lyricsDisabled = lyrics.status === "unavailable" || (lyrics.status === "ready" && !hasSyncedLyrics && !hasPlainLyrics);
 
-  if (view === "lyrics") {
-    return (
-      <LyricsScreen
-        result={result}
-        positionMs={positionMs}
-        syncedLines={lyrics.status === "ready" ? lyrics.syncedLines : null}
-        plainLyrics={lyrics.status === "ready" ? lyrics.plainLyrics : null}
-        onToggleInfo={() => setView("info")}
-        progress={progress}
-      />
-    );
-  }
-
   return (
-    <InfoScreen
-      result={result}
-      onToggleLyrics={() => setView("lyrics")}
-      lyricsDisabled={lyricsDisabled}
-      progress={progress}
-      positionMs={positionMs}
-    />
+    <AnimatePresence mode="wait">
+      {view === "lyrics" ? (
+        <Screen key="lyrics">
+          <LyricsScreen
+            result={result}
+            positionMs={positionMs}
+            syncedLines={lyrics.status === "ready" ? lyrics.syncedLines : null}
+            plainLyrics={lyrics.status === "ready" ? lyrics.plainLyrics : null}
+            onToggleInfo={() => setView("info")}
+            progress={progress}
+          />
+        </Screen>
+      ) : (
+        <Screen key="info">
+          <InfoScreen
+            result={result}
+            onToggleLyrics={() => setView("lyrics")}
+            lyricsDisabled={lyricsDisabled}
+            progress={progress}
+            positionMs={positionMs}
+          />
+        </Screen>
+      )}
+    </AnimatePresence>
   );
 }
 

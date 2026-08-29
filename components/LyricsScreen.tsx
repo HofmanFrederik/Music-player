@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from "framer-motion";
 import { Music } from "lucide-react";
 import { BlurredBackground } from "./BlurredBackground";
 import { BottomActionBar, VideoButton } from "./ActionButtons";
@@ -62,18 +63,45 @@ export function LyricsScreen({
         <VideoButton youtubeVideoId={result.youtubeVideoId} />
       </div>
 
-      <div className="absolute left-[8.8%] top-[100px] right-[8.8%] flex flex-col gap-2">
+      <div className="absolute left-[8.8%] top-[100px] right-[8.8%] flex flex-col gap-2 overflow-hidden">
         {hasSynced ? (
           <>
-            <p className="font-sans text-[29px] font-medium leading-snug tracking-tight text-white/40">
-              {synced.previous ?? ""}
-            </p>
-            <p className="font-sans text-[39px] font-bold leading-tight tracking-tight text-white">
-              {synced.active ?? ""}
-            </p>
-            <p className="font-sans text-[29px] font-medium leading-snug tracking-tight text-white/60">
-              {synced.next ?? ""}
-            </p>
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.p
+                key={`prev-${synced.previous ?? ""}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="font-sans text-[29px] font-medium leading-snug tracking-tight text-white/40"
+              >
+                {synced.previous ?? ""}
+              </motion.p>
+            </AnimatePresence>
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.p
+                key={`active-${synced.active ?? ""}`}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.35, ease: "easeOut" }}
+                className="font-sans text-[39px] font-bold leading-tight tracking-tight text-white"
+              >
+                {synced.active ?? ""}
+              </motion.p>
+            </AnimatePresence>
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.p
+                key={`next-${synced.next ?? ""}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="font-sans text-[29px] font-medium leading-snug tracking-tight text-white/60"
+              >
+                {synced.next ?? ""}
+              </motion.p>
+            </AnimatePresence>
           </>
         ) : (
           <p className="font-sans text-[18px] font-medium leading-relaxed text-white/80 whitespace-pre-line max-h-[220px] overflow-y-auto">
@@ -86,6 +114,7 @@ export function LyricsScreen({
         spotifyTrackId={result.spotifyTrackId}
         onToggleLyrics={onToggleInfo}
         progress={progress}
+        timeLabels={{ positionMs, durationMs: result.durationMs }}
       />
     </div>
   );

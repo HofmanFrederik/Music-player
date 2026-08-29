@@ -30,7 +30,7 @@ export function InfoScreen({
     <div className="relative flex-1 w-full overflow-hidden">
       <BlurredBackground src={result.coverUrl ?? undefined} blurPx={72} />
 
-      <div className="absolute left-[8.8%] top-1/2 flex -translate-y-1/2 items-center gap-6">
+      <div className="absolute left-[8.8%] right-[8.8%] top-1/2 flex -translate-y-1/2 items-center gap-6">
         <div className="relative h-[172px] w-[172px] shrink-0 overflow-hidden rounded-lg bg-white/20">
           {result.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- arbitrary external host (Deezer via ACRCloud), can't be enumerated in next.config
@@ -46,12 +46,12 @@ export function InfoScreen({
           )}
         </div>
 
-        <div className="flex flex-col justify-center gap-3">
-          <div>
-            <p className="font-sans text-[32px] font-medium leading-tight tracking-tight text-white">
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-3">
+          <div className="min-w-0">
+            <p className="truncate font-sans text-[32px] font-medium leading-tight tracking-tight text-white">
               {result.title}
             </p>
-            <p className="font-sans text-[28px] font-medium leading-tight tracking-tight text-white/60">
+            <p className="truncate font-sans text-[28px] font-medium leading-tight tracking-tight text-white/60">
               {result.artist}
             </p>
           </div>

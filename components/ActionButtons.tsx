@@ -64,13 +64,11 @@ export function BottomActionBar({
   const spotifyUrl = spotifyTrackId ? `https://open.spotify.com/track/${spotifyTrackId}` : null;
 
   return (
-    <div className="absolute bottom-[32px] left-[8.8%] right-[8.8%] flex flex-col gap-2">
-      <div className="flex items-center gap-4">
+    <div className="absolute bottom-[32px] left-[8.8%] right-[8.8%] flex flex-col gap-3">
+      <div className="flex items-center justify-between">
         <ExternalIconLink href={spotifyUrl} label="Voeg toe aan Spotify">
           <CirclePlus size={32} strokeWidth={1.5} />
         </ExternalIconLink>
-
-        <ProgressBar progress={progress} className="flex-1" />
 
         <button
           type="button"
@@ -85,14 +83,12 @@ export function BottomActionBar({
         </button>
       </div>
 
+      <ProgressBar progress={progress} />
+
       {timeLabels && (
-        <div className="flex items-center gap-4">
-          <span className="h-8 w-8 shrink-0" aria-hidden />
-          <div className="flex flex-1 items-center justify-between font-sans text-[12px] font-medium text-white">
-            <span>{formatElapsed(timeLabels.positionMs)}</span>
-            <span>{formatRemaining(timeLabels.positionMs, timeLabels.durationMs)}</span>
-          </div>
-          <span className="h-7 w-7 shrink-0" aria-hidden />
+        <div className="flex items-center justify-between font-sans text-[12px] font-medium text-white">
+          <span>{formatElapsed(timeLabels.positionMs)}</span>
+          <span>{formatRemaining(timeLabels.positionMs, timeLabels.durationMs)}</span>
         </div>
       )}
     </div>
@@ -111,11 +107,11 @@ interface ActionButtonsProps {
 /**
  * The fixed UI shown once there's a match, shared by the Info and Lyrics
  * screens (Figma nodes 1:96 / 2:117, measured from their rendered
- * screenshots): video top-right, add-to-Spotify + progress bar + lyrics
- * toggle along the bottom edge, with elapsed/remaining time labels below
- * the bar on the Info screen (added in a later Figma revision). Missing
- * ids disable their button instead of hiding it, so the layout stays
- * stable.
+ * screenshots): video top-right. The bottom section stacks three rows —
+ * add-to-Spotify + lyrics toggle on their own row, then the full-width
+ * progress bar, then elapsed/remaining time labels on the Info screen
+ * (per user direction: the icons shouldn't flank the bar). Missing ids
+ * disable their button instead of hiding it, so the layout stays stable.
  *
  * Info/Idle have nothing else up top, so the video button can sit fixed at
  * right-8.8%/top-31px. The Lyrics screen's mini-player header occupies

@@ -11,6 +11,7 @@ interface LyricsScreenProps {
   syncedLines: LyricLine[] | null;
   plainLyrics: string | null;
   onToggleInfo: () => void;
+  onShowAlbum: () => void;
   progress: number;
 }
 
@@ -30,6 +31,7 @@ export function LyricsScreen({
   syncedLines,
   plainLyrics,
   onToggleInfo,
+  onShowAlbum,
   progress,
 }: LyricsScreenProps) {
   const synced = useSyncedLyrics(syncedLines ?? [], positionMs);
@@ -40,7 +42,12 @@ export function LyricsScreen({
       <BlurredBackground src={result.coverUrl ?? undefined} blurPx={72} />
 
       <div className="absolute left-[8.8%] right-[8.8%] top-[calc(clamp(17px,6.15vmin,32px)_+_env(safe-area-inset-top))] flex items-center gap-4">
-        <div className="relative h-[clamp(22px,7.95vmin,42px)] w-[clamp(22px,7.95vmin,42px)] shrink-0 overflow-hidden rounded-md bg-white/20">
+        <button
+          type="button"
+          onClick={onShowAlbum}
+          aria-label="Bekijk albuminfo"
+          className="relative h-[clamp(22px,7.95vmin,42px)] w-[clamp(22px,7.95vmin,42px)] shrink-0 overflow-hidden rounded-md bg-white/20 transition-opacity hover:opacity-80"
+        >
           {result.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- arbitrary external host (Deezer via ACRCloud), can't be enumerated in next.config
             <img
@@ -53,7 +60,7 @@ export function LyricsScreen({
               <Music className="h-[45%] w-[45%] text-white/50" strokeWidth={1.5} />
             </div>
           )}
-        </div>
+        </button>
         <div className="flex min-w-0 flex-1 items-baseline gap-2">
           <p className="truncate font-sans text-[clamp(14px,5.13vmin,27px)] font-medium leading-tight tracking-tight text-white">
             {result.title}

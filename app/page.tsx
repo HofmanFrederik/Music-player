@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { IdleScreen } from "@/components/IdleScreen";
 import { InfoScreen } from "@/components/InfoScreen";
 import { LyricsScreen } from "@/components/LyricsScreen";
+import { AlbumScreen } from "@/components/AlbumScreen";
 import { HistoryScreen } from "@/components/HistoryScreen";
 import { BlurredBackground } from "@/components/BlurredBackground";
 import { useAudioCapture } from "@/hooks/useAudioCapture";
@@ -277,11 +278,15 @@ function TrackController({
     recordedAt: initialRecordedAt,
     respondedAt: initialRespondedAt,
   });
-  const [view, setView] = useState<"info" | "lyrics">("info");
+  const [view, setView] = useState<"info" | "lyrics" | "album">("info");
 
   const handleSongChanged = useCallback(
     (result: RecognitionResult, recordedAt: number, respondedAt: number) => {
       setMatch({ result, recordedAt, respondedAt });
+      // Album view is for whatever album was showing — stale once the song
+      // changes, so drop back to info (unlike lyrics, which still makes
+      // sense to keep showing for whatever's playing now).
+      setView((v) => (v === "album" ? "info" : v));
     },
     []
   );
@@ -314,8 +319,8 @@ function TrackView({
   result: RecognitionResult;
   recordedAt: number;
   respondedAt: number;
-  view: "info" | "lyrics";
-  onViewChange: (view: "info" | "lyrics") => void;
+  view: "info" | "lyrics" | "album";
+  onViewChange: (view: "info" | "lyrics" | "album") => void;
   onRetry: () => void;
   onSongChanged: (result: RecognitionResult, recordedAt: number, respondedAt: number) => void;
   onMatch: (result: RecognitionResult) => void;
@@ -364,7 +369,17 @@ function TrackView({
             syncedLines={lyrics.status === "ready" ? lyrics.syncedLines : null}
             plainLyrics={lyrics.status === "ready" ? lyrics.plainLyrics : null}
             onToggleInfo={() => onViewChange("info")}
+            onShowAlbum={() => onViewChange("album")}
             progress={progress}
+          />
+        </Screen>
+      ) : view === "album" ? (
+        <Screen key="album">
+          <AlbumScreen
+            artist={result.artist}
+            title={result.title}
+            fallbackCoverUrl={result.coverUrl}
+            onClose={() => onViewChange("info")}
           />
         </Screen>
       ) : (
@@ -372,6 +387,7 @@ function TrackView({
           <InfoScreen
             result={result}
             onToggleLyrics={() => onViewChange("lyrics")}
+            onShowAlbum={() => onViewChange("album")}
             lyricsDisabled={lyricsDisabled}
             progress={progress}
             positionMs={positionMs}

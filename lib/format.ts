@@ -15,6 +15,15 @@ export function formatRemaining(positionMs: number, durationMs: number): string 
   return `-${toMinutesSeconds(durationMs - positionMs)}`;
 }
 
+/** "48 min" / "1u 12m" — total length, coarser than the m:ss transport labels */
+export function formatDuration(ms: number): string {
+  const totalMinutes = Math.round(ms / 60_000);
+  if (totalMinutes < 60) return `${totalMinutes} min`;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return minutes === 0 ? `${hours}u` : `${hours}u ${minutes}m`;
+}
+
 /** "net nu" / "5m geleden" / "3u geleden" / "2d geleden" */
 export function formatRelativeTime(timestampMs: number): string {
   const diffMs = Date.now() - timestampMs;

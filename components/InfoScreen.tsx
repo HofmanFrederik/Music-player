@@ -9,6 +9,7 @@ import type { RecognitionResult } from "@/lib/types";
 interface InfoScreenProps {
   result: RecognitionResult;
   onToggleLyrics: () => void;
+  onShowAlbum: () => void;
   lyricsDisabled?: boolean;
   progress: number;
   positionMs: number;
@@ -39,11 +40,14 @@ const textItem = {
  * playing" pattern once there's a tall column to work with instead of a
  * short wide one. Cover size and text sizes are fluid (`clamp(min, Nvmin,
  * max)`) so they scale across small phones through tablets instead of
- * only looking right at the two reference sizes.
+ * only looking right at the two reference sizes. The cover is a tappable
+ * button (not in Figma, user-requested) opening AlbumScreen — full album
+ * details (year, tracklist, length) that ACRCloud itself doesn't return.
  */
 export function InfoScreen({
   result,
   onToggleLyrics,
+  onShowAlbum,
   lyricsDisabled,
   progress,
   positionMs,
@@ -57,11 +61,15 @@ export function InfoScreen({
           landscape:top-[calc(clamp(58px,20.51vmin,108px)_+_env(safe-area-inset-top))] landscape:flex-row landscape:items-center landscape:gap-6
           portrait:top-[calc(clamp(55px,19.49vmin,103px)_+_env(safe-area-inset-top))] portrait:flex-col portrait:items-center portrait:gap-5 portrait:text-center"
       >
-        <motion.div
+        <motion.button
+          type="button"
+          onClick={onShowAlbum}
+          aria-label="Bekijk albuminfo"
           initial={{ opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
+          whileTap={{ scale: 0.96 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="relative shrink-0 overflow-hidden rounded-lg bg-white/20 landscape:h-[clamp(124px,44.1vmin,232px)] landscape:w-[clamp(124px,44.1vmin,232px)] portrait:h-[clamp(158px,56.41vmin,297px)] portrait:w-[clamp(158px,56.41vmin,297px)]"
+          className="relative shrink-0 overflow-hidden rounded-lg bg-white/20 text-left transition-opacity hover:opacity-80 landscape:h-[clamp(124px,44.1vmin,232px)] landscape:w-[clamp(124px,44.1vmin,232px)] portrait:h-[clamp(158px,56.41vmin,297px)] portrait:w-[clamp(158px,56.41vmin,297px)]"
         >
           {result.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- arbitrary external host (Deezer via ACRCloud), can't be enumerated in next.config
@@ -75,7 +83,7 @@ export function InfoScreen({
               <Music className="h-[35%] w-[35%] text-white/50" strokeWidth={1.5} />
             </div>
           )}
-        </motion.div>
+        </motion.button>
 
         <motion.div
           initial="hidden"

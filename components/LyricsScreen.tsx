@@ -151,8 +151,6 @@ export function LyricsScreen({
       />
 
       <BottomActionBar
-        title={result.title}
-        artist={result.artist}
         spotifyTrackId={result.spotifyTrackId}
         onToggleLyrics={onToggleInfo}
         lyricsActive

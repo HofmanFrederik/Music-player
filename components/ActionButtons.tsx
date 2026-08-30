@@ -1,13 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CirclePlus, Info, Quote, Video } from "lucide-react";
+import { CirclePlus, Quote, Video } from "lucide-react";
 import { ProgressBar } from "./ProgressBar";
 import { formatElapsed, formatRemaining } from "@/lib/format";
-
-function geniusSearchUrl(title: string, artist: string): string {
-  return `https://genius.com/search?q=${encodeURIComponent(`${artist} ${title}`)}`;
-}
 
 export function ExternalIconLink({
   href,
@@ -50,8 +46,6 @@ export function VideoButton({ youtubeVideoId }: { youtubeVideoId: string | null 
 }
 
 interface BottomActionBarProps {
-  title: string;
-  artist: string;
   spotifyTrackId: string | null;
   onToggleLyrics: () => void;
   lyricsDisabled?: boolean;
@@ -63,8 +57,6 @@ interface BottomActionBarProps {
 }
 
 export function BottomActionBar({
-  title,
-  artist,
   spotifyTrackId,
   onToggleLyrics,
   lyricsDisabled = false,
@@ -87,10 +79,6 @@ export function BottomActionBar({
         <div className="flex items-center justify-between">
           <ExternalIconLink href={spotifyUrl} label="Voeg toe aan Spotify">
             <CirclePlus className="h-[clamp(23px,8.21vmin,43px)] w-[clamp(23px,8.21vmin,43px)]" strokeWidth={1.5} />
-          </ExternalIconLink>
-
-          <ExternalIconLink href={geniusSearchUrl(title, artist)} label="Zoek dit nummer op Genius">
-            <Info className="h-[clamp(19px,6.67vmin,35px)] w-[clamp(19px,6.67vmin,35px)]" strokeWidth={1.75} />
           </ExternalIconLink>
 
           <button
@@ -124,8 +112,6 @@ export function BottomActionBar({
 }
 
 interface ActionButtonsProps {
-  title: string;
-  artist: string;
   youtubeVideoId: string | null;
   spotifyTrackId: string | null;
   onToggleLyrics: () => void;
@@ -138,13 +124,10 @@ interface ActionButtonsProps {
  * The fixed UI shown once there's a match, shared by the Info and Lyrics
  * screens (Figma nodes 1:96 / 2:117, measured from their rendered
  * screenshots): video top-right. The bottom section stacks three rows —
- * add-to-Spotify / more-info / lyrics-toggle on their own row, then the
- * full-width progress bar, then elapsed/remaining time labels — shown on
- * both screens (per user direction: the icons shouldn't flank the bar).
- * The more-info button opens a Genius search for the track (title+artist
- * always exist on a match, so unlike Spotify/YouTube it's never disabled).
- * Missing ids disable their button instead of hiding it, so the layout
- * stays stable.
+ * add-to-Spotify / lyrics-toggle on their own row, then the full-width
+ * progress bar, then elapsed/remaining time labels — shown on both screens
+ * (per user direction: the icons shouldn't flank the bar). Missing ids
+ * disable their button instead of hiding it, so the layout stays stable.
  *
  * Info/Idle have nothing else up top, so the video button can sit fixed at
  * right-8.8%/top-31px. The Lyrics screen's mini-player header occupies
@@ -157,8 +140,6 @@ interface ActionButtonsProps {
  * alone wasn't enough clearance.
  */
 export function ActionButtons({
-  title,
-  artist,
   youtubeVideoId,
   spotifyTrackId,
   onToggleLyrics,
@@ -173,8 +154,6 @@ export function ActionButtons({
       </div>
 
       <BottomActionBar
-        title={title}
-        artist={artist}
         spotifyTrackId={spotifyTrackId}
         onToggleLyrics={onToggleLyrics}
         lyricsDisabled={lyricsDisabled}

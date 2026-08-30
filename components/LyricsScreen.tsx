@@ -86,7 +86,11 @@ export function LyricsScreen({
         <VideoButton youtubeVideoId={result.youtubeVideoId} />
       </div>
 
-      <div className="absolute left-[8.8%] top-[calc(clamp(72px,25.64vmin,135px)_+_env(safe-area-inset-top))] right-[8.8%] flex flex-col gap-2 overflow-hidden">
+      <div
+        className="absolute left-[8.8%] right-[8.8%] flex flex-col gap-2 overflow-hidden
+          landscape:top-[calc(clamp(72px,25.64vmin,135px)_+_env(safe-area-inset-top))]
+          portrait:top-[calc(clamp(209px,73.85vmin,389px)_+_env(safe-area-inset-top))]"
+      >
         {hasSynced ? (
           <>
             <AnimatePresence mode="popLayout" initial={false}>

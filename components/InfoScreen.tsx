@@ -10,6 +10,8 @@ interface InfoScreenProps {
   result: RecognitionResult;
   onToggleLyrics: () => void;
   onShowAlbum: () => void;
+  onShowSongInfo: () => void;
+  onShowArtistInfo: () => void;
   lyricsDisabled?: boolean;
   progress: number;
   positionMs: number;
@@ -48,6 +50,8 @@ export function InfoScreen({
   result,
   onToggleLyrics,
   onShowAlbum,
+  onShowSongInfo,
+  onShowArtistInfo,
   lyricsDisabled,
   progress,
   positionMs,
@@ -92,18 +96,24 @@ export function InfoScreen({
           className="flex min-w-0 flex-col gap-3 landscape:flex-1 landscape:justify-center portrait:w-full portrait:items-center"
         >
           <div className="min-w-0 portrait:w-full">
-            <motion.p
+            <motion.button
+              type="button"
+              onClick={onShowSongInfo}
+              aria-label="Meer info over dit nummer"
               variants={textItem}
-              className="truncate font-sans text-[clamp(23px,8.21vmin,43px)] font-medium leading-tight tracking-tight text-white"
+              className="block w-full truncate text-left font-sans text-[clamp(23px,8.21vmin,43px)] font-medium leading-tight tracking-tight text-white transition-opacity hover:opacity-80 portrait:text-center"
             >
               {result.title}
-            </motion.p>
-            <motion.p
+            </motion.button>
+            <motion.button
+              type="button"
+              onClick={onShowArtistInfo}
+              aria-label="Meer info over deze artiest"
               variants={textItem}
-              className="truncate font-sans text-[clamp(20px,7.18vmin,38px)] font-medium leading-tight tracking-tight text-white/60"
+              className="block w-full truncate text-left font-sans text-[clamp(20px,7.18vmin,38px)] font-medium leading-tight tracking-tight text-white/60 transition-opacity hover:opacity-80 portrait:text-center"
             >
               {result.artist}
-            </motion.p>
+            </motion.button>
           </div>
 
           {result.genres.length > 0 && (

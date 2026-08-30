@@ -8,6 +8,7 @@ import { IdleScreen } from "@/components/IdleScreen";
 import { InfoScreen } from "@/components/InfoScreen";
 import { LyricsScreen } from "@/components/LyricsScreen";
 import { AlbumScreen } from "@/components/AlbumScreen";
+import { WikiInfoScreen } from "@/components/WikiInfoScreen";
 import { HistoryScreen } from "@/components/HistoryScreen";
 import { BlurredBackground } from "@/components/BlurredBackground";
 import { useAudioCapture } from "@/hooks/useAudioCapture";
@@ -253,6 +254,8 @@ interface Match {
   respondedAt: number;
 }
 
+type TrackViewState = "info" | "lyrics" | "album" | "songInfo" | "artistInfo";
+
 // Owns "which match is currently on screen" so a song change detected in
 // the background can swap it out. TrackView below is remounted (via key)
 // whenever the match changes, giving it a clean timer/lyrics-fetch state
@@ -278,15 +281,15 @@ function TrackController({
     recordedAt: initialRecordedAt,
     respondedAt: initialRespondedAt,
   });
-  const [view, setView] = useState<"info" | "lyrics" | "album">("info");
+  const [view, setView] = useState<TrackViewState>("info");
 
   const handleSongChanged = useCallback(
     (result: RecognitionResult, recordedAt: number, respondedAt: number) => {
       setMatch({ result, recordedAt, respondedAt });
-      // Album view is for whatever album was showing — stale once the song
-      // changes, so drop back to info (unlike lyrics, which still makes
-      // sense to keep showing for whatever's playing now).
-      setView((v) => (v === "album" ? "info" : v));
+      // Album/song-info/artist-info are for whatever was showing before —
+      // stale once the song changes, so drop back to info (unlike lyrics,
+      // which still makes sense to keep showing for whatever's playing now).
+      setView((v) => (v === "lyrics" ? v : "info"));
     },
     []
   );
@@ -319,8 +322,8 @@ function TrackView({
   result: RecognitionResult;
   recordedAt: number;
   respondedAt: number;
-  view: "info" | "lyrics" | "album";
-  onViewChange: (view: "info" | "lyrics" | "album") => void;
+  view: TrackViewState;
+  onViewChange: (view: TrackViewState) => void;
   onRetry: () => void;
   onSongChanged: (result: RecognitionResult, recordedAt: number, respondedAt: number) => void;
   onMatch: (result: RecognitionResult) => void;
@@ -370,6 +373,8 @@ function TrackView({
             plainLyrics={lyrics.status === "ready" ? lyrics.plainLyrics : null}
             onToggleInfo={() => onViewChange("info")}
             onShowAlbum={() => onViewChange("album")}
+            onShowSongInfo={() => onViewChange("songInfo")}
+            onShowArtistInfo={() => onViewChange("artistInfo")}
             progress={progress}
           />
         </Screen>
@@ -382,12 +387,34 @@ function TrackView({
             onClose={() => onViewChange("info")}
           />
         </Screen>
+      ) : view === "songInfo" ? (
+        <Screen key="songInfo">
+          <WikiInfoScreen
+            mode="song"
+            artist={result.artist}
+            title={result.title}
+            fallbackCoverUrl={result.coverUrl}
+            onClose={() => onViewChange("info")}
+          />
+        </Screen>
+      ) : view === "artistInfo" ? (
+        <Screen key="artistInfo">
+          <WikiInfoScreen
+            mode="artist"
+            artist={result.artist}
+            title={result.title}
+            fallbackCoverUrl={result.coverUrl}
+            onClose={() => onViewChange("info")}
+          />
+        </Screen>
       ) : (
         <Screen key="info">
           <InfoScreen
             result={result}
             onToggleLyrics={() => onViewChange("lyrics")}
             onShowAlbum={() => onViewChange("album")}
+            onShowSongInfo={() => onViewChange("songInfo")}
+            onShowArtistInfo={() => onViewChange("artistInfo")}
             lyricsDisabled={lyricsDisabled}
             progress={progress}
             positionMs={positionMs}

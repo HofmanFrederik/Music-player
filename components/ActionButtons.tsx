@@ -89,7 +89,7 @@ export function BottomActionBar({
             <CirclePlus className="h-[clamp(23px,8.21vmin,43px)] w-[clamp(23px,8.21vmin,43px)]" strokeWidth={1.5} />
           </ExternalIconLink>
 
-          <ExternalIconLink href={geniusSearchUrl(title, artist)} label="Meer info over dit nummer">
+          <ExternalIconLink href={geniusSearchUrl(title, artist)} label="Zoek dit nummer op Genius">
             <Info className="h-[clamp(19px,6.67vmin,35px)] w-[clamp(19px,6.67vmin,35px)]" strokeWidth={1.75} />
           </ExternalIconLink>
 

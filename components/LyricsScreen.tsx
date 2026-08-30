@@ -12,6 +12,8 @@ interface LyricsScreenProps {
   plainLyrics: string | null;
   onToggleInfo: () => void;
   onShowAlbum: () => void;
+  onShowSongInfo: () => void;
+  onShowArtistInfo: () => void;
   progress: number;
 }
 
@@ -32,6 +34,8 @@ export function LyricsScreen({
   plainLyrics,
   onToggleInfo,
   onShowAlbum,
+  onShowSongInfo,
+  onShowArtistInfo,
   progress,
 }: LyricsScreenProps) {
   const synced = useSyncedLyrics(syncedLines ?? [], positionMs);
@@ -62,12 +66,22 @@ export function LyricsScreen({
           )}
         </button>
         <div className="flex min-w-0 flex-1 items-baseline gap-2">
-          <p className="truncate font-sans text-[clamp(14px,5.13vmin,27px)] font-medium leading-tight tracking-tight text-white">
+          <button
+            type="button"
+            onClick={onShowSongInfo}
+            aria-label="Meer info over dit nummer"
+            className="truncate font-sans text-[clamp(14px,5.13vmin,27px)] font-medium leading-tight tracking-tight text-white transition-opacity hover:opacity-80"
+          >
             {result.title}
-          </p>
-          <p className="truncate font-sans text-[clamp(12px,4.1vmin,22px)] font-medium leading-tight tracking-tight text-white/60">
+          </button>
+          <button
+            type="button"
+            onClick={onShowArtistInfo}
+            aria-label="Meer info over deze artiest"
+            className="truncate font-sans text-[clamp(12px,4.1vmin,22px)] font-medium leading-tight tracking-tight text-white/60 transition-opacity hover:opacity-80"
+          >
             {result.artist}
-          </p>
+          </button>
         </div>
         <VideoButton youtubeVideoId={result.youtubeVideoId} />
       </div>

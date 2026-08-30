@@ -393,6 +393,7 @@ function TrackView({
             mode="song"
             artist={result.artist}
             title={result.title}
+            album={result.album}
             fallbackCoverUrl={result.coverUrl}
             onClose={() => onViewChange("info")}
           />
@@ -403,6 +404,7 @@ function TrackView({
             mode="artist"
             artist={result.artist}
             title={result.title}
+            album={result.album}
             fallbackCoverUrl={result.coverUrl}
             onClose={() => onViewChange("info")}
           />

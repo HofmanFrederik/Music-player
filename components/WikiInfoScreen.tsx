@@ -5,11 +5,13 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { BlurredBackground } from "./BlurredBackground";
 import { BASE_PATH } from "@/lib/base-path";
 import type { WikiSummary } from "@/lib/wikipedia";
+import type { SongCredits } from "@/lib/discogs";
 
 interface WikiInfoScreenProps {
   mode: "song" | "artist";
   artist: string;
   title: string;
+  album: string | null;
   /** Currently playing track's cover — shown while the Wikipedia thumbnail loads, and as the fallback if there is none. */
   fallbackCoverUrl: string | null;
   onClose: () => void;
@@ -50,17 +52,51 @@ function useWikiSummary(mode: "song" | "artist", artist: string, title: string) 
   return state;
 }
 
+// Credits are only meaningful for the song, not the artist — `enabled`
+// keeps this a no-op for mode="artist" without breaking the rules of
+// hooks by calling it conditionally. Failures/no-match stay silent (no
+// unavailable state rendered) since this is a bonus section under the
+// Wikipedia extract, not the screen's main purpose.
+function useCredits(enabled: boolean, artist: string, title: string, album: string | null) {
+  const [credits, setCredits] = useState<SongCredits | null>(null);
+
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+
+    const params = new URLSearchParams({ artist, title, ...(album ? { album } : {}) });
+
+    fetch(`${BASE_PATH}/api/credits?${params.toString()}`)
+      .then(async (res) => {
+        if (cancelled || !res.ok) return;
+        const data: SongCredits = await res.json();
+        if (!cancelled) setCredits(data);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, artist, title, album]);
+
+  return credits;
+}
+
 /**
  * Reachable by tapping the song title or artist name on Info/Lyrics — not
  * part of the Figma file. ACRCloud has no "about this song/artist" text of
  * its own, so this looks the page up on Wikipedia's free, keyless REST API
  * (see lib/wikipedia.ts) purely on demand, same pattern as AlbumScreen.
  * One component handles both song and artist lookups (`mode`) since they
- * only differ in the search query and heading, not the layout.
+ * only differ in the search query and heading, not the layout. Song mode
+ * additionally shows a "Credits" section (who worked on it, which
+ * instruments they played) sourced from Discogs — see lib/discogs.ts for
+ * why Discogs rather than MusicBrainz.
  */
-export function WikiInfoScreen({ mode, artist, title, fallbackCoverUrl, onClose }: WikiInfoScreenProps) {
+export function WikiInfoScreen({ mode, artist, title, album, fallbackCoverUrl, onClose }: WikiInfoScreenProps) {
   const state = useWikiSummary(mode, artist, title);
   const summary = state.status === "ready" ? state.summary : null;
+  const credits = useCredits(mode === "song", artist, title, album);
   const heading = mode === "song" ? title : artist;
 
   return (
@@ -121,6 +157,24 @@ export function WikiInfoScreen({ mode, artist, title, fallbackCoverUrl, onClose 
               <ExternalLink className="h-[clamp(9px,3.08vmin,16px)] w-[clamp(9px,3.08vmin,16px)]" strokeWidth={2} />
             </a>
           </>
+        )}
+
+        {credits && credits.entries.length > 0 && (
+          <div className="mt-5 flex flex-col gap-2.5">
+            <p className="font-sans text-[clamp(9px,3.08vmin,16px)] font-semibold uppercase tracking-wide text-white/40">
+              Credits
+            </p>
+            {credits.entries.map((entry) => (
+              <div key={entry.name} className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 flex-1 truncate font-sans text-[clamp(11px,3.85vmin,20px)] font-medium text-white">
+                  {entry.name}
+                </span>
+                <span className="max-w-[55%] text-right font-sans text-[clamp(10px,3.59vmin,19px)] text-white/50">
+                  {entry.roles.join(", ")}
+                </span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

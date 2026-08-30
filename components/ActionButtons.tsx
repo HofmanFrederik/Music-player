@@ -75,7 +75,9 @@ export function BottomActionBar({
   const spotifyUrl = spotifyTrackId ? `https://open.spotify.com/track/${spotifyTrackId}` : null;
 
   return (
-    <div className="absolute bottom-[calc(clamp(23px,8.21vmin,43px)_+_env(safe-area-inset-bottom))] left-[8.8%] right-[8.8%]">
+    <div className="absolute left-[8.8%] right-[8.8%]
+        landscape:bottom-[calc(clamp(14px,5.13vmin,27px)_+_env(safe-area-inset-bottom))]
+        portrait:bottom-[calc(clamp(23px,8.21vmin,43px)_+_env(safe-area-inset-bottom))]">
       {/* Frosted-glass backdrop behind the whole icons/bar/labels cluster,
           so it stays legible over a busy or bright album cover — extends
           a bit past the content on every side rather than hugging it. */}

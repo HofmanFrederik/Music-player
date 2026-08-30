@@ -6,6 +6,7 @@ import { BlurredBackground } from "./BlurredBackground";
 import { BASE_PATH } from "@/lib/base-path";
 import { formatDuration, formatElapsed } from "@/lib/format";
 import type { AlbumInfo } from "@/lib/album";
+import type { WikiSummary } from "@/lib/wikipedia";
 
 interface AlbumScreenProps {
   artist: string;
@@ -50,6 +51,36 @@ function useAlbumInfo(artist: string, title: string) {
   return state;
 }
 
+// Album Wikipedia summary depends on the album's own canonical name (from
+// iTunes, via useAlbumInfo above), not the raw ACRCloud artist/title — so
+// this only fires once that's resolved, and quietly renders nothing rather
+// than a loading/error state when there's no article, since it's supplementary
+// to the screen's main purpose rather than the reason for it.
+function useAlbumWikiSummary(artist: string, albumName: string | null) {
+  const [summary, setSummary] = useState<WikiSummary | null>(null);
+
+  useEffect(() => {
+    if (!albumName) return;
+    let cancelled = false;
+
+    const params = new URLSearchParams({ mode: "album", artist, album: albumName });
+
+    fetch(`${BASE_PATH}/api/wiki?${params.toString()}`)
+      .then(async (res) => {
+        if (cancelled || !res.ok) return;
+        const data: WikiSummary = await res.json();
+        if (!cancelled) setSummary(data);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [artist, albumName]);
+
+  return summary;
+}
+
 /**
  * Reachable by tapping the album cover on Info/Lyrics — not part of the
  * Figma file. ACRCloud only tells us about the matched track, not the
@@ -57,10 +88,17 @@ function useAlbumInfo(artist: string, title: string) {
  * Search+Lookup APIs (see lib/album.ts) purely on demand, not fetched
  * eagerly like lyrics. Styled to match HistoryScreen (same gradient
  * fallback, insets, fluid type scale, safe-area-aware edges).
+ *
+ * "Over dit album" below the tracklist is a Wikipedia summary (same source
+ * as WikiInfoScreen's song/artist info), fetched once the album's own
+ * canonical name is known — silently omitted rather than shown as an error
+ * when there's no article, since it's supplementary to the tracklist that's
+ * this screen's main purpose.
  */
 export function AlbumScreen({ artist, title, fallbackCoverUrl, onClose }: AlbumScreenProps) {
   const state = useAlbumInfo(artist, title);
   const album = state.status === "ready" ? state.album : null;
+  const wiki = useAlbumWikiSummary(artist, album?.albumName ?? null);
 
   return (
     <div className="relative flex-1 w-full overflow-hidden">
@@ -126,6 +164,17 @@ export function AlbumScreen({ artist, title, fallbackCoverUrl, onClose }: AlbumS
                 );
               })}
             </ul>
+
+            {wiki && (
+              <div className="mt-5 flex flex-col gap-1.5">
+                <p className="font-sans text-[clamp(9px,3.08vmin,16px)] font-semibold uppercase tracking-wide text-white/40">
+                  Over dit album
+                </p>
+                <p className="font-sans text-[clamp(11px,3.85vmin,20px)] font-medium leading-relaxed text-white/80 whitespace-pre-line">
+                  {wiki.extract}
+                </p>
+              </div>
+            )}
           </>
         )}
       </div>

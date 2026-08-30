@@ -20,7 +20,9 @@ interface LyricsScreenProps {
  * row) in place of the big cover, and three lyric lines below it —
  * measured left inset matches every other screen (~8.8%). Falls back to
  * plain, unhighlighted lyrics when there's no line-level sync (see spec:
- * instrumental or lrclib 404 -> plainLyrics without highlight).
+ * instrumental or lrclib 404 -> plainLyrics without highlight). All text
+ * and the mini cover use fluid `clamp(min, Nvmin, max)` sizing so they
+ * scale across small phones through tablets, not just the reference size.
  */
 export function LyricsScreen({
   result,
@@ -37,8 +39,8 @@ export function LyricsScreen({
     <div className="relative flex-1 w-full overflow-hidden">
       <BlurredBackground src={result.coverUrl ?? undefined} blurPx={72} />
 
-      <div className="absolute left-[8.8%] right-[8.8%] top-[24px] flex items-center gap-4">
-        <div className="relative h-[31px] w-[31px] shrink-0 overflow-hidden rounded-md bg-white/20">
+      <div className="absolute left-[8.8%] right-[8.8%] top-[clamp(17px,6.15vmin,32px)] flex items-center gap-4">
+        <div className="relative h-[clamp(22px,7.95vmin,42px)] w-[clamp(22px,7.95vmin,42px)] shrink-0 overflow-hidden rounded-md bg-white/20">
           {result.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- arbitrary external host (Deezer via ACRCloud), can't be enumerated in next.config
             <img
@@ -48,22 +50,22 @@ export function LyricsScreen({
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <Music className="text-white/50" size={16} strokeWidth={1.5} />
+              <Music className="h-[45%] w-[45%] text-white/50" strokeWidth={1.5} />
             </div>
           )}
         </div>
         <div className="flex min-w-0 flex-1 items-baseline gap-2">
-          <p className="truncate font-sans text-[20px] font-medium leading-tight tracking-tight text-white">
+          <p className="truncate font-sans text-[clamp(14px,5.13vmin,27px)] font-medium leading-tight tracking-tight text-white">
             {result.title}
           </p>
-          <p className="truncate font-sans text-[16px] font-medium leading-tight tracking-tight text-white/60">
+          <p className="truncate font-sans text-[clamp(12px,4.1vmin,22px)] font-medium leading-tight tracking-tight text-white/60">
             {result.artist}
           </p>
         </div>
         <VideoButton youtubeVideoId={result.youtubeVideoId} />
       </div>
 
-      <div className="absolute left-[8.8%] top-[100px] right-[8.8%] flex flex-col gap-2 overflow-hidden">
+      <div className="absolute left-[8.8%] top-[clamp(72px,25.64vmin,135px)] right-[8.8%] flex flex-col gap-2 overflow-hidden">
         {hasSynced ? (
           <>
             <AnimatePresence mode="popLayout" initial={false}>
@@ -73,7 +75,7 @@ export function LyricsScreen({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
-                className="font-sans text-[22px] font-medium leading-snug tracking-tight text-white/40"
+                className="font-sans text-[clamp(16px,5.64vmin,30px)] font-medium leading-snug tracking-tight text-white/40"
               >
                 {synced.previous ?? ""}
               </motion.p>
@@ -85,7 +87,7 @@ export function LyricsScreen({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.35, ease: "easeOut" }}
-                className="font-sans text-[39px] font-bold leading-tight tracking-tight text-white"
+                className="font-sans text-[clamp(28px,10vmin,53px)] font-bold leading-tight tracking-tight text-white"
               >
                 {synced.active ?? ""}
               </motion.p>
@@ -97,14 +99,14 @@ export function LyricsScreen({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
-                className="font-sans text-[29px] font-medium leading-snug tracking-tight text-white/60"
+                className="font-sans text-[clamp(21px,7.44vmin,39px)] font-medium leading-snug tracking-tight text-white/60"
               >
                 {synced.next ?? ""}
               </motion.p>
             </AnimatePresence>
           </>
         ) : (
-          <p className="font-sans text-[18px] font-medium leading-relaxed text-white/80 whitespace-pre-line max-h-[220px] overflow-y-auto">
+          <p className="font-sans text-[clamp(13px,4.62vmin,24px)] font-medium leading-relaxed text-white/80 whitespace-pre-line max-h-[220px] overflow-y-auto">
             {plainLyrics ?? "Geen songtekst beschikbaar."}
           </p>
         )}
@@ -116,7 +118,7 @@ export function LyricsScreen({
           it. Sits between the lyrics text and BottomActionBar in DOM order
           so it paints over the text but under the bar's own controls. */}
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-[170px] backdrop-blur-xl"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[clamp(122px,43.59vmin,230px)] backdrop-blur-xl"
         style={{
           maskImage: "linear-gradient(to bottom, transparent, black 65%)",
           WebkitMaskImage: "linear-gradient(to bottom, transparent, black 65%)",

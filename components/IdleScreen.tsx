@@ -24,6 +24,11 @@ interface IdleScreenProps {
  * Portrait has no Figma reference — text centers instead of hugging the
  * left edge (a left-anchored heading wastes most of a narrow, tall
  * screen) and drops a size, via the `portrait:`/`landscape:` variants.
+ * Font size is also fluid (`clamp(min, Nvmin, max)`) rather than a fixed
+ * px value, so it scales with the actual screen instead of only looking
+ * right at the two reference sizes (844x390 / 390x844) — vmin ties it to
+ * whichever of width/height is smaller, which is the dimension that
+ * actually constrains a landscape-locked layout in either orientation.
  *
  * The history button (top-left, not in Figma) is a real nested <button>,
  * so the root can't be a <button> itself (invalid HTML) — it's a
@@ -57,14 +62,14 @@ export function IdleScreen({ onTap, recording, disabled, onShowHistory }: IdleSc
           onShowHistory();
         }}
         aria-label="Geschiedenis"
-        className="absolute left-[8.8%] top-[31px] z-20 flex items-center justify-center text-white opacity-70 transition-opacity hover:opacity-100 portrait:left-6 portrait:top-6"
+        className="absolute left-[8.8%] top-[clamp(22px,7.95vmin,42px)] z-20 flex items-center justify-center text-white opacity-70 transition-opacity hover:opacity-100 portrait:left-[clamp(22px,7.95vmin,42px)]"
       >
-        <History size={26} strokeWidth={1.75} />
+        <History className="h-[clamp(19px,6.67vmin,35px)] w-[clamp(19px,6.67vmin,35px)]" strokeWidth={1.75} />
       </button>
 
       <div className="relative z-10 flex h-full w-full items-center landscape:pl-[8.8%] landscape:pr-6 portrait:justify-center portrait:px-8">
         <motion.p
-          className="font-sans text-[39px] font-bold leading-none text-white landscape:text-left portrait:text-center portrait:text-[30px] portrait:leading-tight"
+          className="font-sans font-bold leading-none text-white landscape:text-left landscape:text-[clamp(28px,10vmin,53px)] portrait:text-center portrait:leading-tight portrait:text-[clamp(22px,7.69vmin,40px)]"
           animate={{ opacity: [0.55, 1, 0.55] }}
           transition={{
             duration: recording ? 1.1 : 2.2,

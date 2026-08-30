@@ -37,7 +37,9 @@ const textItem = {
  * Portrait has no Figma reference — cover and text stack vertically and
  * center instead of sitting side by side, which is the natural "now
  * playing" pattern once there's a tall column to work with instead of a
- * short wide one.
+ * short wide one. Cover size and text sizes are fluid (`clamp(min, Nvmin,
+ * max)`) so they scale across small phones through tablets instead of
+ * only looking right at the two reference sizes.
  */
 export function InfoScreen({
   result,
@@ -52,14 +54,14 @@ export function InfoScreen({
 
       <div
         className="absolute left-[8.8%] right-[8.8%] flex
-          landscape:top-[80px] landscape:flex-row landscape:items-center landscape:gap-6
-          portrait:top-[76px] portrait:flex-col portrait:items-center portrait:gap-5 portrait:text-center"
+          landscape:top-[clamp(58px,20.51vmin,108px)] landscape:flex-row landscape:items-center landscape:gap-6
+          portrait:top-[clamp(55px,19.49vmin,103px)] portrait:flex-col portrait:items-center portrait:gap-5 portrait:text-center"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="relative shrink-0 overflow-hidden rounded-lg bg-white/20 landscape:h-[172px] landscape:w-[172px] portrait:h-[220px] portrait:w-[220px]"
+          className="relative shrink-0 overflow-hidden rounded-lg bg-white/20 landscape:h-[clamp(124px,44.1vmin,232px)] landscape:w-[clamp(124px,44.1vmin,232px)] portrait:h-[clamp(158px,56.41vmin,297px)] portrait:w-[clamp(158px,56.41vmin,297px)]"
         >
           {result.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- arbitrary external host (Deezer via ACRCloud), can't be enumerated in next.config
@@ -70,7 +72,7 @@ export function InfoScreen({
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <Music className="text-white/50" size={40} strokeWidth={1.5} />
+              <Music className="h-[35%] w-[35%] text-white/50" strokeWidth={1.5} />
             </div>
           )}
         </motion.div>
@@ -84,13 +86,13 @@ export function InfoScreen({
           <div className="min-w-0 portrait:w-full">
             <motion.p
               variants={textItem}
-              className="truncate font-sans text-[32px] font-medium leading-tight tracking-tight text-white"
+              className="truncate font-sans text-[clamp(23px,8.21vmin,43px)] font-medium leading-tight tracking-tight text-white"
             >
               {result.title}
             </motion.p>
             <motion.p
               variants={textItem}
-              className="truncate font-sans text-[28px] font-medium leading-tight tracking-tight text-white/60"
+              className="truncate font-sans text-[clamp(20px,7.18vmin,38px)] font-medium leading-tight tracking-tight text-white/60"
             >
               {result.artist}
             </motion.p>
@@ -101,7 +103,7 @@ export function InfoScreen({
               {result.genres.map((genre) => (
                 <span
                   key={genre}
-                  className="rounded-full bg-white/20 px-[14px] py-[6px] text-[12px] font-medium text-white"
+                  className="rounded-full bg-white/20 px-[14px] py-[6px] text-[clamp(9px,3.08vmin,16px)] font-medium text-white"
                 >
                   {genre}
                 </span>

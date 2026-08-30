@@ -44,7 +44,7 @@ export function VideoButton({ youtubeVideoId }: { youtubeVideoId: string | null 
 
   return (
     <ExternalIconLink href={youtubeUrl} label="Bekijk muziekvideo">
-      <Video size={28} strokeWidth={1.75} />
+      <Video className="h-[clamp(20px,7.18vmin,38px)] w-[clamp(20px,7.18vmin,38px)]" strokeWidth={1.75} />
     </ExternalIconLink>
   );
 }
@@ -75,7 +75,7 @@ export function BottomActionBar({
   const spotifyUrl = spotifyTrackId ? `https://open.spotify.com/track/${spotifyTrackId}` : null;
 
   return (
-    <div className="absolute bottom-[32px] left-[8.8%] right-[8.8%]">
+    <div className="absolute bottom-[clamp(23px,8.21vmin,43px)] left-[8.8%] right-[8.8%]">
       {/* Frosted-glass backdrop behind the whole icons/bar/labels cluster,
           so it stays legible over a busy or bright album cover — extends
           a bit past the content on every side rather than hugging it. */}
@@ -84,11 +84,11 @@ export function BottomActionBar({
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <ExternalIconLink href={spotifyUrl} label="Voeg toe aan Spotify">
-            <CirclePlus size={32} strokeWidth={1.5} />
+            <CirclePlus className="h-[clamp(23px,8.21vmin,43px)] w-[clamp(23px,8.21vmin,43px)]" strokeWidth={1.5} />
           </ExternalIconLink>
 
           <ExternalIconLink href={geniusSearchUrl(title, artist)} label="Meer info over dit nummer">
-            <Info size={26} strokeWidth={1.75} />
+            <Info className="h-[clamp(19px,6.67vmin,35px)] w-[clamp(19px,6.67vmin,35px)]" strokeWidth={1.75} />
           </ExternalIconLink>
 
           <button
@@ -100,14 +100,18 @@ export function BottomActionBar({
               lyricsDisabled ? "opacity-30 cursor-not-allowed" : "opacity-100 hover:opacity-80"
             }`}
           >
-            <Quote size={28} strokeWidth={1.75} fill={lyricsActive ? "currentColor" : "none"} />
+            <Quote
+              className="h-[clamp(20px,7.18vmin,38px)] w-[clamp(20px,7.18vmin,38px)]"
+              strokeWidth={1.75}
+              fill={lyricsActive ? "currentColor" : "none"}
+            />
           </button>
         </div>
 
         <ProgressBar progress={progress} />
 
         {timeLabels && (
-          <div className="flex items-center justify-between font-sans text-[12px] font-medium text-white">
+          <div className="flex items-center justify-between font-sans text-[clamp(9px,3.08vmin,16px)] font-medium text-white">
             <span>{formatElapsed(timeLabels.positionMs)}</span>
             <span>{formatRemaining(timeLabels.positionMs, timeLabels.durationMs)}</span>
           </div>
@@ -157,7 +161,7 @@ export function ActionButtons({
 }: ActionButtonsProps) {
   return (
     <>
-      <div className="absolute right-[8.8%] top-[31px]">
+      <div className="absolute right-[8.8%] top-[clamp(22px,7.95vmin,42px)]">
         <VideoButton youtubeVideoId={youtubeVideoId} />
       </div>
 

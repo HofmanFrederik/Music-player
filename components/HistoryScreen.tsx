@@ -21,15 +21,15 @@ export function HistoryScreen({ entries, onClose, onClear }: HistoryScreenProps)
     <div className="relative flex-1 w-full overflow-hidden">
       <BlurredBackground />
 
-      <div className="absolute left-[8.8%] right-[8.8%] top-[24px] flex items-center justify-between">
+      <div className="absolute left-[8.8%] right-[8.8%] top-[clamp(17px,6.15vmin,32px)] flex items-center justify-between">
         <button
           type="button"
           onClick={onClose}
           aria-label="Terug"
           className="flex items-center gap-2 text-white opacity-90 transition-opacity hover:opacity-70"
         >
-          <ArrowLeft size={22} strokeWidth={2} />
-          <span className="font-sans text-[16px] font-medium">Geschiedenis</span>
+          <ArrowLeft className="h-[clamp(16px,5.64vmin,30px)] w-[clamp(16px,5.64vmin,30px)]" strokeWidth={2} />
+          <span className="font-sans text-[clamp(12px,4.1vmin,22px)] font-medium">Geschiedenis</span>
         </button>
 
         {entries.length > 0 && (
@@ -39,15 +39,15 @@ export function HistoryScreen({ entries, onClose, onClear }: HistoryScreenProps)
             aria-label="Geschiedenis wissen"
             className="flex items-center gap-1.5 text-white/60 transition-opacity hover:opacity-70"
           >
-            <Trash2 size={16} strokeWidth={2} />
-            <span className="font-sans text-[12px] font-medium">Wissen</span>
+            <Trash2 className="h-[clamp(12px,4.1vmin,22px)] w-[clamp(12px,4.1vmin,22px)]" strokeWidth={2} />
+            <span className="font-sans text-[clamp(9px,3.08vmin,16px)] font-medium">Wissen</span>
           </button>
         )}
       </div>
 
-      <div className="absolute left-[8.8%] right-[8.8%] top-[68px] bottom-[24px] overflow-y-auto">
+      <div className="absolute left-[8.8%] right-[8.8%] top-[clamp(49px,17.44vmin,92px)] bottom-[clamp(17px,6.15vmin,32px)] overflow-y-auto">
         {entries.length === 0 ? (
-          <p className="font-sans text-[14px] text-white/50">Nog geen nummers herkend.</p>
+          <p className="font-sans text-[clamp(10px,3.59vmin,19px)] text-white/50">Nog geen nummers herkend.</p>
         ) : (
           <ul className="flex flex-col gap-3">
             {entries.map((entry) => {
@@ -71,21 +71,21 @@ export function HistoryScreen({ entries, onClose, onClear }: HistoryScreenProps)
                       disabled ? "cursor-not-allowed opacity-50" : "opacity-100 hover:opacity-70"
                     }`}
                   >
-                    <div className="relative h-[40px] w-[40px] shrink-0 overflow-hidden rounded-md bg-white/10">
+                    <div className="relative h-[clamp(29px,10.26vmin,54px)] w-[clamp(29px,10.26vmin,54px)] shrink-0 overflow-hidden rounded-md bg-white/10">
                       {entry.coverUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element -- arbitrary external host, can't be enumerated in next.config
                         <img src={entry.coverUrl} alt="" className="h-full w-full object-cover" />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">
-                          <Music className="text-white/40" size={18} strokeWidth={1.5} />
+                          <Music className="h-[45%] w-[45%] text-white/40" strokeWidth={1.5} />
                         </div>
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-sans text-[15px] font-medium text-white">{entry.title}</p>
-                      <p className="truncate font-sans text-[13px] text-white/60">{entry.artist}</p>
+                      <p className="truncate font-sans text-[clamp(11px,3.85vmin,20px)] font-medium text-white">{entry.title}</p>
+                      <p className="truncate font-sans text-[clamp(9px,3.33vmin,18px)] text-white/60">{entry.artist}</p>
                     </div>
-                    <span className="shrink-0 font-sans text-[11px] text-white/40">
+                    <span className="shrink-0 font-sans text-[clamp(8px,2.82vmin,15px)] text-white/40">
                       {formatRelativeTime(entry.recognizedAt)}
                     </span>
                   </a>

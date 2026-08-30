@@ -391,7 +391,10 @@ function LoadingState() {
     <div className="relative flex-1 w-full overflow-hidden">
       <BlurredBackground src={url} blurPx={72} />
       <div className="relative z-10 flex h-full w-full flex-col items-center justify-center gap-4">
-        <Loader2 className="animate-spin text-white" size={40} strokeWidth={2} />
+        <Loader2
+          className="h-[clamp(29px,10.26vmin,54px)] w-[clamp(29px,10.26vmin,54px)] animate-spin text-white"
+          strokeWidth={2}
+        />
         <motion.p
           className="text-sm text-white/70"
           animate={{ opacity: [0.4, 1, 0.4] }}

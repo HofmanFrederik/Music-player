@@ -75,7 +75,7 @@ export function BottomActionBar({
   const spotifyUrl = spotifyTrackId ? `https://open.spotify.com/track/${spotifyTrackId}` : null;
 
   return (
-    <div className="absolute bottom-[clamp(23px,8.21vmin,43px)] left-[8.8%] right-[8.8%]">
+    <div className="absolute bottom-[calc(clamp(23px,8.21vmin,43px)_+_env(safe-area-inset-bottom))] left-[8.8%] right-[8.8%]">
       {/* Frosted-glass backdrop behind the whole icons/bar/labels cluster,
           so it stays legible over a busy or bright album cover — extends
           a bit past the content on every side rather than hugging it. */}
@@ -148,6 +148,11 @@ interface ActionButtonsProps {
  * right-8.8%/top-31px. The Lyrics screen's mini-player header occupies
  * that corner, so it composes VideoButton inline in its own row instead of
  * using this combined component — see LyricsScreen.tsx.
+ *
+ * Top/bottom offsets add `env(safe-area-inset-*)` so the video button and
+ * bottom bar never sit under a real device's status bar/notch or home
+ * indicator — caught on a real phone in portrait, where the fixed offset
+ * alone wasn't enough clearance.
  */
 export function ActionButtons({
   title,
@@ -161,7 +166,7 @@ export function ActionButtons({
 }: ActionButtonsProps) {
   return (
     <>
-      <div className="absolute right-[8.8%] top-[clamp(22px,7.95vmin,42px)]">
+      <div className="absolute right-[8.8%] top-[calc(clamp(22px,7.95vmin,42px)_+_env(safe-area-inset-top))]">
         <VideoButton youtubeVideoId={youtubeVideoId} />
       </div>
 

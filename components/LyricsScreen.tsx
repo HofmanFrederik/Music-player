@@ -39,7 +39,7 @@ export function LyricsScreen({
     <div className="relative flex-1 w-full overflow-hidden">
       <BlurredBackground src={result.coverUrl ?? undefined} blurPx={72} />
 
-      <div className="absolute left-[8.8%] right-[8.8%] top-[clamp(17px,6.15vmin,32px)] flex items-center gap-4">
+      <div className="absolute left-[8.8%] right-[8.8%] top-[calc(clamp(17px,6.15vmin,32px)_+_env(safe-area-inset-top))] flex items-center gap-4">
         <div className="relative h-[clamp(22px,7.95vmin,42px)] w-[clamp(22px,7.95vmin,42px)] shrink-0 overflow-hidden rounded-md bg-white/20">
           {result.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- arbitrary external host (Deezer via ACRCloud), can't be enumerated in next.config
@@ -65,7 +65,7 @@ export function LyricsScreen({
         <VideoButton youtubeVideoId={result.youtubeVideoId} />
       </div>
 
-      <div className="absolute left-[8.8%] top-[clamp(72px,25.64vmin,135px)] right-[8.8%] flex flex-col gap-2 overflow-hidden">
+      <div className="absolute left-[8.8%] top-[calc(clamp(72px,25.64vmin,135px)_+_env(safe-area-inset-top))] right-[8.8%] flex flex-col gap-2 overflow-hidden">
         {hasSynced ? (
           <>
             <AnimatePresence mode="popLayout" initial={false}>

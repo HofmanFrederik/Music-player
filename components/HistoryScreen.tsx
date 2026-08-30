@@ -15,13 +15,16 @@ interface HistoryScreenProps {
  * Local-only recognition history (localStorage, see lib/history.ts) —
  * reachable from the idle screen. Not part of the Figma file; styled to
  * match the rest of the app (same gradient fallback, insets, type scale).
+ * Top/bottom offsets add `env(safe-area-inset-*)` so the header never
+ * sits under a real device's status bar/notch (caught on a real phone in
+ * portrait — the fixed offset alone wasn't enough clearance there).
  */
 export function HistoryScreen({ entries, onClose, onClear }: HistoryScreenProps) {
   return (
     <div className="relative flex-1 w-full overflow-hidden">
       <BlurredBackground />
 
-      <div className="absolute left-[8.8%] right-[8.8%] top-[clamp(17px,6.15vmin,32px)] flex items-center justify-between">
+      <div className="absolute left-[8.8%] right-[8.8%] top-[calc(clamp(17px,6.15vmin,32px)_+_env(safe-area-inset-top))] flex items-center justify-between">
         <button
           type="button"
           onClick={onClose}
@@ -45,7 +48,7 @@ export function HistoryScreen({ entries, onClose, onClear }: HistoryScreenProps)
         )}
       </div>
 
-      <div className="absolute left-[8.8%] right-[8.8%] top-[clamp(49px,17.44vmin,92px)] bottom-[clamp(17px,6.15vmin,32px)] overflow-y-auto">
+      <div className="absolute left-[8.8%] right-[8.8%] top-[calc(clamp(49px,17.44vmin,92px)_+_env(safe-area-inset-top))] bottom-[calc(clamp(17px,6.15vmin,32px)_+_env(safe-area-inset-bottom))] overflow-y-auto">
         {entries.length === 0 ? (
           <p className="font-sans text-[clamp(10px,3.59vmin,19px)] text-white/50">Nog geen nummers herkend.</p>
         ) : (

@@ -62,7 +62,7 @@ export function IdleScreen({ onTap, recording, disabled, onShowHistory }: IdleSc
           onShowHistory();
         }}
         aria-label="Geschiedenis"
-        className="absolute left-[8.8%] top-[clamp(22px,7.95vmin,42px)] z-20 flex items-center justify-center text-white opacity-70 transition-opacity hover:opacity-100 portrait:left-[clamp(22px,7.95vmin,42px)]"
+        className="absolute left-[8.8%] top-[calc(clamp(22px,7.95vmin,42px)_+_env(safe-area-inset-top))] z-20 flex items-center justify-center text-white opacity-70 transition-opacity hover:opacity-100 portrait:left-[calc(clamp(22px,7.95vmin,42px)_+_env(safe-area-inset-left))]"
       >
         <History className="h-[clamp(19px,6.67vmin,35px)] w-[clamp(19px,6.67vmin,35px)]" strokeWidth={1.75} />
       </button>

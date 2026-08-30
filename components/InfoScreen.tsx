@@ -54,8 +54,8 @@ export function InfoScreen({
 
       <div
         className="absolute left-[8.8%] right-[8.8%] flex
-          landscape:top-[clamp(58px,20.51vmin,108px)] landscape:flex-row landscape:items-center landscape:gap-6
-          portrait:top-[clamp(55px,19.49vmin,103px)] portrait:flex-col portrait:items-center portrait:gap-5 portrait:text-center"
+          landscape:top-[calc(clamp(58px,20.51vmin,108px)_+_env(safe-area-inset-top))] landscape:flex-row landscape:items-center landscape:gap-6
+          portrait:top-[calc(clamp(55px,19.49vmin,103px)_+_env(safe-area-inset-top))] portrait:flex-col portrait:items-center portrait:gap-5 portrait:text-center"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.94 }}

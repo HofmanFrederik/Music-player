@@ -17,6 +17,8 @@ interface InfoScreenProps {
   positionMs: number;
   onSkipPrevious?: () => void;
   onSkipNext?: () => void;
+  liked?: boolean;
+  onToggleLike?: () => void;
 }
 
 const textColumn = {
@@ -59,6 +61,8 @@ export function InfoScreen({
   positionMs,
   onSkipPrevious,
   onSkipNext,
+  liked,
+  onToggleLike,
 }: InfoScreenProps) {
   return (
     <div className="relative flex-1 w-full overflow-hidden">
@@ -144,6 +148,8 @@ export function InfoScreen({
         timeLabels={{ positionMs, durationMs: result.durationMs }}
         onSkipPrevious={onSkipPrevious}
         onSkipNext={onSkipNext}
+        liked={liked}
+        onToggleLike={onToggleLike}
       />
     </div>
   );

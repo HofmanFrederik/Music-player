@@ -17,6 +17,8 @@ interface LyricsScreenProps {
   progress: number;
   onSkipPrevious?: () => void;
   onSkipNext?: () => void;
+  liked?: boolean;
+  onToggleLike?: () => void;
 }
 
 /**
@@ -41,6 +43,8 @@ export function LyricsScreen({
   progress,
   onSkipPrevious,
   onSkipNext,
+  liked,
+  onToggleLike,
 }: LyricsScreenProps) {
   const synced = useSyncedLyrics(syncedLines ?? [], positionMs);
   const hasSynced = Boolean(syncedLines && syncedLines.length > 0);
@@ -162,6 +166,8 @@ export function LyricsScreen({
         timeLabels={{ positionMs, durationMs: result.durationMs }}
         onSkipPrevious={onSkipPrevious}
         onSkipNext={onSkipNext}
+        liked={liked}
+        onToggleLike={onToggleLike}
       />
     </div>
   );

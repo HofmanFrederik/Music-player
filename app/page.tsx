@@ -151,6 +151,7 @@ export default function Home() {
               onMatch={history.record}
               onSkipPrevious={handleSkipPrevious}
               onSkipNext={handleSkipNext}
+              onError={notify}
             />
           </Screen>
         )}

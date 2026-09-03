@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CirclePlus, Quote, SkipBack, SkipForward, Video } from "lucide-react";
+import { CirclePlus, Heart, Quote, SkipBack, SkipForward, Video } from "lucide-react";
 import { ProgressBar } from "./ProgressBar";
 import { formatElapsed, formatRemaining } from "@/lib/format";
 
@@ -57,6 +57,13 @@ interface BottomActionBarProps {
   /** Only present for a Spotify-sourced match — mic-recognized tracks aren't something this app actually controls playback of. */
   onSkipPrevious?: () => void;
   onSkipNext?: () => void;
+  /**
+   * Only present for a Spotify-sourced match — replaces the "open in
+   * Spotify" plus icon with a like/unlike toggle for the current track.
+   * `liked` is undefined while that status is still loading.
+   */
+  liked?: boolean;
+  onToggleLike?: () => void;
 }
 
 export function BottomActionBar({
@@ -68,6 +75,8 @@ export function BottomActionBar({
   timeLabels = null,
   onSkipPrevious,
   onSkipNext,
+  liked,
+  onToggleLike,
 }: BottomActionBarProps) {
   const spotifyUrl = spotifyTrackId ? `https://open.spotify.com/track/${spotifyTrackId}` : null;
 
@@ -93,9 +102,27 @@ export function BottomActionBar({
             </button>
           )}
 
-          <ExternalIconLink href={spotifyUrl} label="Voeg toe aan Spotify">
-            <CirclePlus className="h-[clamp(23px,8.21vmin,43px)] w-[clamp(23px,8.21vmin,43px)]" strokeWidth={1.5} />
-          </ExternalIconLink>
+          {onToggleLike ? (
+            <button
+              type="button"
+              onClick={onToggleLike}
+              disabled={liked === undefined}
+              aria-label={liked ? "Verwijder uit Liked Songs" : "Voeg toe aan Liked Songs"}
+              className={`flex shrink-0 items-center justify-center transition-opacity ${
+                liked === undefined ? "opacity-30 cursor-not-allowed" : "opacity-100 hover:opacity-80"
+              } ${liked ? "text-[#1ed760]" : "text-white"}`}
+            >
+              <Heart
+                className="h-[clamp(23px,8.21vmin,43px)] w-[clamp(23px,8.21vmin,43px)]"
+                strokeWidth={1.5}
+                fill={liked ? "currentColor" : "none"}
+              />
+            </button>
+          ) : (
+            <ExternalIconLink href={spotifyUrl} label="Voeg toe aan Spotify">
+              <CirclePlus className="h-[clamp(23px,8.21vmin,43px)] w-[clamp(23px,8.21vmin,43px)]" strokeWidth={1.5} />
+            </ExternalIconLink>
+          )}
 
           <button
             type="button"
@@ -147,6 +174,8 @@ interface ActionButtonsProps {
   timeLabels?: { positionMs: number; durationMs: number } | null;
   onSkipPrevious?: () => void;
   onSkipNext?: () => void;
+  liked?: boolean;
+  onToggleLike?: () => void;
 }
 
 /**
@@ -159,7 +188,9 @@ interface ActionButtonsProps {
  * disable their button instead of hiding it, so the layout stays stable.
  * Skip previous/next only appear when onSkipPrevious/onSkipNext are
  * passed — a Spotify-sourced match only, since this app never controls
- * playback for a mic-recognized one.
+ * playback for a mic-recognized one. Same story for onToggleLike: when
+ * passed, it replaces the "open in Spotify" plus icon with a like/unlike
+ * heart for the current track instead.
  *
  * Info/Idle have nothing else up top, so the video button can sit fixed at
  * right-8.8%/top-31px. The Lyrics screen's mini-player header occupies
@@ -180,6 +211,8 @@ export function ActionButtons({
   timeLabels = null,
   onSkipPrevious,
   onSkipNext,
+  liked,
+  onToggleLike,
 }: ActionButtonsProps) {
   return (
     <>
@@ -195,6 +228,8 @@ export function ActionButtons({
         timeLabels={timeLabels}
         onSkipPrevious={onSkipPrevious}
         onSkipNext={onSkipNext}
+        liked={liked}
+        onToggleLike={onToggleLike}
       />
     </>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { InfoScreen } from "./InfoScreen";
 import { LyricsScreen } from "./LyricsScreen";
@@ -8,6 +8,7 @@ import { AlbumScreen } from "./AlbumScreen";
 import { WikiInfoScreen } from "./WikiInfoScreen";
 import { Screen } from "./Screen";
 import { useLyrics } from "@/hooks/useLyrics";
+import { isTrackSaved, removeTrack, saveTrack } from "@/lib/spotify-library";
 import type { SpotifyNowPlaying } from "@/hooks/useSpotifyPlayback";
 import type { RecognitionResult } from "@/lib/types";
 
@@ -52,6 +53,49 @@ function useLivePosition(nowPlaying: SpotifyNowPlaying, durationMs: number) {
 }
 
 /**
+ * Whether the current track is in the user's Liked Songs, and a toggle to
+ * save/remove it — backs the like heart that replaces the "open in
+ * Spotify" plus icon in Spotify mode. `liked` stays undefined (button
+ * disabled) until the initial check resolves. The toggle updates
+ * optimistically and reverts + reports the error via onError if the
+ * actual API call fails, rather than waiting for a round trip before
+ * reflecting the tap.
+ */
+function useLikedTrack(trackId: string | null, onError: (message: string) => void) {
+  const [liked, setLiked] = useState<boolean | undefined>(undefined);
+
+  useEffect(() => {
+    if (!trackId) return;
+    let cancelled = false;
+
+    isTrackSaved(trackId)
+      .then((saved) => {
+        if (!cancelled) setLiked(saved);
+      })
+      .catch(() => {
+        if (!cancelled) setLiked(undefined);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [trackId]);
+
+  const toggle = useCallback(() => {
+    if (!trackId || liked === undefined) return;
+    const next = !liked;
+    setLiked(next);
+
+    (next ? saveTrack(trackId) : removeTrack(trackId)).catch((error: unknown) => {
+      setLiked(!next);
+      onError(error instanceof Error ? error.message : "Actie mislukt.");
+    });
+  }, [trackId, liked, onError]);
+
+  return { liked, toggle };
+}
+
+/**
  * Owns `view` (info/lyrics/album/...) *outside* SpotifyTrackView's own
  * remount boundary — SpotifyTrackView is remounted fresh (via the `key`
  * below) whenever the song itself changes, which resets its internal
@@ -67,11 +111,13 @@ export function SpotifyTrackController({
   onMatch,
   onSkipPrevious,
   onSkipNext,
+  onError,
 }: {
   nowPlaying: SpotifyNowPlaying;
   onMatch: (result: RecognitionResult) => void;
   onSkipPrevious: () => void;
   onSkipNext: () => void;
+  onError: (message: string) => void;
 }) {
   const [view, setView] = useState<ViewState>("info");
   const songKey = `${nowPlaying.title}::${nowPlaying.artist}`;
@@ -95,6 +141,7 @@ export function SpotifyTrackController({
       onMatch={onMatch}
       onSkipPrevious={onSkipPrevious}
       onSkipNext={onSkipNext}
+      onError={onError}
     />
   );
 }
@@ -106,6 +153,7 @@ function SpotifyTrackView({
   onMatch,
   onSkipPrevious,
   onSkipNext,
+  onError,
 }: {
   nowPlaying: SpotifyNowPlaying;
   view: ViewState;
@@ -113,6 +161,7 @@ function SpotifyTrackView({
   onMatch: (result: RecognitionResult) => void;
   onSkipPrevious: () => void;
   onSkipNext: () => void;
+  onError: (message: string) => void;
 }) {
   const result: RecognitionResult = {
     title: nowPlaying.title,
@@ -128,6 +177,7 @@ function SpotifyTrackView({
 
   const { positionMs, progress } = useLivePosition(nowPlaying, result.durationMs);
   const lyrics = useLyrics(result.artist, result.title, result.durationMs);
+  const { liked, toggle: onToggleLike } = useLikedTrack(nowPlaying.spotifyTrackId, onError);
 
   useEffect(() => {
     onMatch(result);
@@ -156,6 +206,8 @@ function SpotifyTrackView({
             progress={progress}
             onSkipPrevious={onSkipPrevious}
             onSkipNext={onSkipNext}
+            liked={liked}
+            onToggleLike={onToggleLike}
           />
         </Screen>
       ) : view === "album" ? (
@@ -202,6 +254,8 @@ function SpotifyTrackView({
             positionMs={positionMs}
             onSkipPrevious={onSkipPrevious}
             onSkipNext={onSkipNext}
+            liked={liked}
+            onToggleLike={onToggleLike}
           />
         </Screen>
       )}

@@ -4,13 +4,15 @@ const CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
 const AUTHORIZE_ENDPOINT = "https://accounts.spotify.com/authorize";
 const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
 // user-modify-playback-state is for the skip next/previous buttons;
-// user-library-read is for "play a random song" (reads Liked Songs to pick
-// from). Both added after the initial "show what's playing" version
-// shipped, so anyone who connected before either needs to reconnect once —
-// a token only carries the scopes it was originally granted, Spotify
-// doesn't retroactively add new ones to an existing grant.
+// user-library-read is for "play a random song" (reads Liked Songs) and
+// for checking whether the current track is already liked;
+// user-library-modify is for the like/unlike toggle itself. All added
+// after the initial "show what's playing" version shipped, so anyone who
+// connected before needs to reconnect once — a token only carries the
+// scopes it was originally granted, Spotify doesn't retroactively add new
+// ones to an existing grant.
 const SCOPES =
-  "user-read-currently-playing user-read-playback-state user-modify-playback-state user-library-read";
+  "user-read-currently-playing user-read-playback-state user-modify-playback-state user-library-read user-library-modify";
 
 const TOKENS_KEY = "spotify_tokens";
 const VERIFIER_KEY = "spotify_code_verifier";

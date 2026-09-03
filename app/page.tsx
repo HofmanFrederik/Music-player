@@ -125,6 +125,12 @@ export default function Home() {
     });
   }, [spotify, notify]);
 
+  const handlePlayRandom = useCallback(() => {
+    spotify.playRandom().catch((error: unknown) => {
+      notify(error instanceof Error ? error.message : "Afspelen mislukt.");
+    });
+  }, [spotify, notify]);
+
   const showIdle =
     !spotify.nowPlaying &&
     (capture.status === "idle" ||
@@ -164,6 +170,7 @@ export default function Home() {
               onShowHistory={openHistory}
               spotifyConnected={spotify.connected}
               onToggleSpotify={toggleSpotify}
+              onPlayRandom={handlePlayRandom}
             />
           </Screen>
         )}

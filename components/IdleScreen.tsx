@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { History, Link2, Unlink2 } from "lucide-react";
+import { History, Link2, Shuffle, Unlink2 } from "lucide-react";
 import { BlurredBackground } from "./BlurredBackground";
 import { useIdleArtwork } from "@/hooks/useIdleArtwork";
 
@@ -12,6 +12,7 @@ interface IdleScreenProps {
   onShowHistory: () => void;
   spotifyConnected: boolean;
   onToggleSpotify: () => void;
+  onPlayRandom: () => void;
 }
 
 /**
@@ -34,9 +35,19 @@ interface IdleScreenProps {
  *
  * The history button (top-left, not in Figma) is a real nested <button>,
  * so the root can't be a <button> itself (invalid HTML) — it's a
- * role="button" div instead, with the same click/keyboard behavior.
+ * role="button" div instead, with the same click/keyboard behavior. The
+ * Spotify connect toggle (top-right) and "random song" pill (bottom,
+ * connected only) are nested buttons for the same reason.
  */
-export function IdleScreen({ onTap, recording, disabled, onShowHistory, spotifyConnected, onToggleSpotify }: IdleScreenProps) {
+export function IdleScreen({
+  onTap,
+  recording,
+  disabled,
+  onShowHistory,
+  spotifyConnected,
+  onToggleSpotify,
+  onPlayRandom,
+}: IdleScreenProps) {
   const { url } = useIdleArtwork();
 
   return (
@@ -100,6 +111,21 @@ export function IdleScreen({ onTap, recording, disabled, onShowHistory, spotifyC
           Listening to the music...
         </motion.p>
       </div>
+
+      {spotifyConnected && (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onPlayRandom();
+          }}
+          aria-label="Speel een willekeurig nummer via Spotify"
+          className="absolute inset-x-0 bottom-[calc(clamp(23px,8.21vmin,43px)_+_env(safe-area-inset-bottom))] z-20 mx-auto flex w-fit items-center gap-2 rounded-full bg-white/15 px-5 py-3 text-white backdrop-blur-md transition-opacity hover:opacity-80"
+        >
+          <Shuffle className="h-[clamp(16px,5.64vmin,30px)] w-[clamp(16px,5.64vmin,30px)]" strokeWidth={1.75} />
+          <span className="font-sans text-[clamp(11px,3.85vmin,20px)] font-medium">Willekeurig nummer</span>
+        </button>
+      )}
     </div>
   );
 }

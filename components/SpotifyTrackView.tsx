@@ -52,28 +52,17 @@ function useLivePosition(nowPlaying: SpotifyNowPlaying, durationMs: number) {
 }
 
 /**
- * Spotify-sourced counterpart to TrackView (app/page.tsx) — same leaf
- * screens and view-switching, but driven by real playback data instead of
- * a recorded sample + estimated timer. Two real differences from TrackView:
- *
- * - No useBackgroundRecognition (that's the mic-based "keep re-sampling to
- *   catch a song change" mechanism). Home's own Spotify poll already does
- *   this job by re-rendering with fresh nowPlaying data every ~5s; this
- *   component is remounted fresh only when the *song itself* changes
- *   (Home keys it by title+artist), so React naturally preserves it —
- *   timer, lyrics, current view and all — across polls that just confirm
- *   the same song is still playing.
- * - No "estimated duration ran out -> back to idle" effect. Spotify tells
- *   us directly when playback stops (nowPlaying goes null at the Home
- *   level), so there's nothing to estimate.
- *
- * onSkipPrevious/onSkipNext are always passed through to Info/Lyrics here
- * (unlike TrackView, which never has them — mic-recognized matches aren't
- * something this app controls playback of) — Home already wraps the raw
- * Spotify API calls with error handling/a toast, so this component just
- * forwards them as-is.
+ * Owns `view` (info/lyrics/album/...) *outside* SpotifyTrackView's own
+ * remount boundary — SpotifyTrackView is remounted fresh (via the `key`
+ * below) whenever the song itself changes, which resets its internal
+ * state (timer, lyrics, onMatch's one-shot effect). Without lifting `view`
+ * up here too, it would reset right along with everything else, so
+ * switching to the next Spotify track always bounced back to the info
+ * screen even if lyrics were showing — exactly mirroring why the mic flow
+ * splits into TrackController (owns `view`) / TrackView (remounts per
+ * match) below in app/page.tsx, for the same reason.
  */
-export function SpotifyTrackView({
+export function SpotifyTrackController({
   nowPlaying,
   onMatch,
   onSkipPrevious,
@@ -85,7 +74,46 @@ export function SpotifyTrackView({
   onSkipNext: () => void;
 }) {
   const [view, setView] = useState<ViewState>("info");
+  const songKey = `${nowPlaying.title}::${nowPlaying.artist}`;
 
+  useEffect(() => {
+    // Same rule as TrackController's handleSongChanged: lyrics persists
+    // across a song change, every other view is stale and resets to info.
+    // Deliberately keyed on songKey only, not on every nowPlaying poll of
+    // the same song — this is a legitimate "adjust state to match a
+    // changed prop" reset, not derived data that belongs in render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above
+    setView((v) => (v === "lyrics" ? v : "info"));
+  }, [songKey]);
+
+  return (
+    <SpotifyTrackView
+      key={songKey}
+      nowPlaying={nowPlaying}
+      view={view}
+      onViewChange={setView}
+      onMatch={onMatch}
+      onSkipPrevious={onSkipPrevious}
+      onSkipNext={onSkipNext}
+    />
+  );
+}
+
+function SpotifyTrackView({
+  nowPlaying,
+  view,
+  onViewChange,
+  onMatch,
+  onSkipPrevious,
+  onSkipNext,
+}: {
+  nowPlaying: SpotifyNowPlaying;
+  view: ViewState;
+  onViewChange: (view: ViewState) => void;
+  onMatch: (result: RecognitionResult) => void;
+  onSkipPrevious: () => void;
+  onSkipNext: () => void;
+}) {
   const result: RecognitionResult = {
     title: nowPlaying.title,
     artist: nowPlaying.artist,
@@ -121,10 +149,10 @@ export function SpotifyTrackView({
             positionMs={positionMs}
             syncedLines={lyrics.status === "ready" ? lyrics.syncedLines : null}
             plainLyrics={lyrics.status === "ready" ? lyrics.plainLyrics : null}
-            onToggleInfo={() => setView("info")}
-            onShowAlbum={() => setView("album")}
-            onShowSongInfo={() => setView("songInfo")}
-            onShowArtistInfo={() => setView("artistInfo")}
+            onToggleInfo={() => onViewChange("info")}
+            onShowAlbum={() => onViewChange("album")}
+            onShowSongInfo={() => onViewChange("songInfo")}
+            onShowArtistInfo={() => onViewChange("artistInfo")}
             progress={progress}
             onSkipPrevious={onSkipPrevious}
             onSkipNext={onSkipNext}
@@ -136,7 +164,7 @@ export function SpotifyTrackView({
             artist={result.artist}
             title={result.title}
             fallbackCoverUrl={result.coverUrl}
-            onClose={() => setView("info")}
+            onClose={() => onViewChange("info")}
           />
         </Screen>
       ) : view === "songInfo" ? (
@@ -147,7 +175,7 @@ export function SpotifyTrackView({
             title={result.title}
             album={result.album}
             fallbackCoverUrl={result.coverUrl}
-            onClose={() => setView("info")}
+            onClose={() => onViewChange("info")}
           />
         </Screen>
       ) : view === "artistInfo" ? (
@@ -158,17 +186,17 @@ export function SpotifyTrackView({
             title={result.title}
             album={result.album}
             fallbackCoverUrl={result.coverUrl}
-            onClose={() => setView("info")}
+            onClose={() => onViewChange("info")}
           />
         </Screen>
       ) : (
         <Screen key="info">
           <InfoScreen
             result={result}
-            onToggleLyrics={() => setView("lyrics")}
-            onShowAlbum={() => setView("album")}
-            onShowSongInfo={() => setView("songInfo")}
-            onShowArtistInfo={() => setView("artistInfo")}
+            onToggleLyrics={() => onViewChange("lyrics")}
+            onShowAlbum={() => onViewChange("album")}
+            onShowSongInfo={() => onViewChange("songInfo")}
+            onShowArtistInfo={() => onViewChange("artistInfo")}
             lyricsDisabled={lyricsDisabled}
             progress={progress}
             positionMs={positionMs}

@@ -11,7 +11,7 @@ import { WikiInfoScreen } from "@/components/WikiInfoScreen";
 import { HistoryScreen } from "@/components/HistoryScreen";
 import { BlurredBackground } from "@/components/BlurredBackground";
 import { Screen } from "@/components/Screen";
-import { SpotifyTrackView } from "@/components/SpotifyTrackView";
+import { SpotifyTrackController } from "@/components/SpotifyTrackView";
 import { useAudioCapture } from "@/hooks/useAudioCapture";
 import { useIdleArtwork } from "@/hooks/useIdleArtwork";
 import { useTrackTimer } from "@/hooks/useTrackTimer";
@@ -141,8 +141,12 @@ export default function Home() {
     <main className="relative flex flex-1 flex-col">
       <AnimatePresence mode="wait">
         {spotify.nowPlaying && (
-          <Screen key={`spotify::${spotify.nowPlaying.title}::${spotify.nowPlaying.artist}`}>
-            <SpotifyTrackView
+          // Static key — SpotifyTrackController must NOT remount on a song
+          // change (that would reset the `view` state it exists to
+          // preserve). It remounts SpotifyTrackView itself, internally,
+          // via its own key. See SpotifyTrackView.tsx.
+          <Screen key="spotify">
+            <SpotifyTrackController
               nowPlaying={spotify.nowPlaying}
               onMatch={history.record}
               onSkipPrevious={handleSkipPrevious}

@@ -1,18 +1,55 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { InfoScreen } from "./InfoScreen";
 import { LyricsScreen } from "./LyricsScreen";
 import { AlbumScreen } from "./AlbumScreen";
 import { WikiInfoScreen } from "./WikiInfoScreen";
 import { Screen } from "./Screen";
-import { useTrackTimer } from "@/hooks/useTrackTimer";
 import { useLyrics } from "@/hooks/useLyrics";
 import type { SpotifyNowPlaying } from "@/hooks/useSpotifyPlayback";
 import type { RecognitionResult } from "@/lib/types";
 
 type ViewState = "info" | "lyrics" | "album" | "songInfo" | "artistInfo";
+
+/**
+ * useTrackTimer (the mic-flow timer) intentionally anchors its position
+ * once per mount and never re-syncs — correct there, since a new match
+ * always remounts with a fresh anchor anyway. This component deliberately
+ * does *not* remount on every poll (same song keeps its instance, see the
+ * class doc below), so reusing that hook here meant a seek in Spotify
+ * never caught up: it kept extrapolating from the very first poll's
+ * progressMs forever. This re-syncs to nowPlaying's latest progressMs on
+ * every render via a ref the RAF loop reads each frame — a fresh poll
+ * (including one that shows a seek) is reflected within one animation
+ * frame after it arrives, not ignored.
+ */
+function useLivePosition(nowPlaying: SpotifyNowPlaying, durationMs: number) {
+  const nowPlayingRef = useRef(nowPlaying);
+  useEffect(() => {
+    nowPlayingRef.current = nowPlaying;
+  }, [nowPlaying]);
+
+  const [positionMs, setPositionMs] = useState(() => nowPlaying.progressMs);
+
+  useEffect(() => {
+    let frameId: number;
+
+    const tick = () => {
+      const current = nowPlayingRef.current;
+      const position = current.progressMs + (Date.now() - current.polledAt);
+      setPositionMs(Math.min(position, durationMs));
+      frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [durationMs]);
+
+  const progress = durationMs > 0 ? Math.min(1, Math.max(0, positionMs / durationMs)) : 0;
+  return { positionMs, progress };
+}
 
 /**
  * Spotify-sourced counterpart to TrackView (app/page.tsx) — same leaf
@@ -51,12 +88,7 @@ export function SpotifyTrackView({
     spotifyTrackId: nowPlaying.spotifyTrackId,
   };
 
-  const { positionMs, progress } = useTrackTimer({
-    durationMs: result.durationMs,
-    playOffsetMs: result.playOffsetMs,
-    recordedAt: nowPlaying.polledAt,
-    respondedAt: nowPlaying.polledAt,
-  });
+  const { positionMs, progress } = useLivePosition(nowPlaying, result.durationMs);
   const lyrics = useLyrics(result.artist, result.title, result.durationMs);
 
   useEffect(() => {

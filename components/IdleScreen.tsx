@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { History } from "lucide-react";
+import { History, Link2, Unlink2 } from "lucide-react";
 import { BlurredBackground } from "./BlurredBackground";
 import { useIdleArtwork } from "@/hooks/useIdleArtwork";
 
@@ -10,6 +10,8 @@ interface IdleScreenProps {
   recording: boolean;
   disabled?: boolean;
   onShowHistory: () => void;
+  spotifyConnected: boolean;
+  onToggleSpotify: () => void;
 }
 
 /**
@@ -34,7 +36,7 @@ interface IdleScreenProps {
  * so the root can't be a <button> itself (invalid HTML) — it's a
  * role="button" div instead, with the same click/keyboard behavior.
  */
-export function IdleScreen({ onTap, recording, disabled, onShowHistory }: IdleScreenProps) {
+export function IdleScreen({ onTap, recording, disabled, onShowHistory, spotifyConnected, onToggleSpotify }: IdleScreenProps) {
   const { url } = useIdleArtwork();
 
   return (
@@ -65,6 +67,24 @@ export function IdleScreen({ onTap, recording, disabled, onShowHistory }: IdleSc
         className="absolute left-[8.8%] top-[calc(clamp(22px,7.95vmin,42px)_+_env(safe-area-inset-top))] z-20 flex items-center justify-center text-white opacity-70 transition-opacity hover:opacity-100 portrait:left-[calc(clamp(22px,7.95vmin,42px)_+_env(safe-area-inset-left))]"
       >
         <History className="h-[clamp(19px,6.67vmin,35px)] w-[clamp(19px,6.67vmin,35px)]" strokeWidth={1.75} />
+      </button>
+
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onToggleSpotify();
+        }}
+        aria-label={spotifyConnected ? "Koppel Spotify los" : "Verbind met Spotify"}
+        className={`absolute right-[8.8%] top-[calc(clamp(22px,7.95vmin,42px)_+_env(safe-area-inset-top))] z-20 flex items-center justify-center transition-opacity hover:opacity-100 portrait:right-[calc(clamp(22px,7.95vmin,42px)_+_env(safe-area-inset-right))] ${
+          spotifyConnected ? "text-[#1ed760] opacity-90" : "text-white opacity-70"
+        }`}
+      >
+        {spotifyConnected ? (
+          <Unlink2 className="h-[clamp(19px,6.67vmin,35px)] w-[clamp(19px,6.67vmin,35px)]" strokeWidth={1.75} />
+        ) : (
+          <Link2 className="h-[clamp(19px,6.67vmin,35px)] w-[clamp(19px,6.67vmin,35px)]" strokeWidth={1.75} />
+        )}
       </button>
 
       <div className="relative z-10 flex h-full w-full items-center landscape:pl-[8.8%] landscape:pr-6 portrait:justify-center portrait:px-8">

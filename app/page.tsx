@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { IdleScreen } from "@/components/IdleScreen";
@@ -11,14 +10,18 @@ import { AlbumScreen } from "@/components/AlbumScreen";
 import { WikiInfoScreen } from "@/components/WikiInfoScreen";
 import { HistoryScreen } from "@/components/HistoryScreen";
 import { BlurredBackground } from "@/components/BlurredBackground";
+import { Screen } from "@/components/Screen";
+import { SpotifyTrackView } from "@/components/SpotifyTrackView";
 import { useAudioCapture } from "@/hooks/useAudioCapture";
 import { useIdleArtwork } from "@/hooks/useIdleArtwork";
 import { useTrackTimer } from "@/hooks/useTrackTimer";
 import { useBackgroundRecognition } from "@/hooks/useBackgroundRecognition";
+import { useLyrics } from "@/hooks/useLyrics";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { useHistory } from "@/hooks/useHistory";
+import { useSpotifyPlayback } from "@/hooks/useSpotifyPlayback";
 import { BASE_PATH } from "@/lib/base-path";
-import type { LyricLine, RecognitionResult } from "@/lib/types";
+import type { RecognitionResult } from "@/lib/types";
 
 type RecognitionState =
   | { status: "loading" }
@@ -61,67 +64,13 @@ function useRecognition(blob: Blob) {
   return state;
 }
 
-type LyricsState =
-  | { status: "loading" }
-  | { status: "ready"; syncedLines: LyricLine[] | null; plainLyrics: string | null }
-  | { status: "unavailable" };
-
-function useLyrics(artist: string, title: string, durationMs: number) {
-  const [state, setState] = useState<LyricsState>({ status: "loading" });
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const params = new URLSearchParams({
-      artist_name: artist,
-      track_name: title,
-      duration: String(Math.round(durationMs / 1000)),
-    });
-
-    fetch(`${BASE_PATH}/api/lyrics?${params.toString()}`)
-      .then(async (res) => {
-        if (cancelled) return;
-        if (!res.ok) {
-          setState({ status: "unavailable" });
-          return;
-        }
-        const data = await res.json();
-        setState({ status: "ready", syncedLines: data.syncedLyrics, plainLyrics: data.plainLyrics });
-      })
-      .catch(() => {
-        if (!cancelled) setState({ status: "unavailable" });
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [artist, title, durationMs]);
-
-  return state;
-}
-
-// Shared crossfade used everywhere the app switches between full screens
-// (idle/result/error, loading/track, info/lyrics) so nothing just snaps.
-function Screen({ children }: { children: ReactNode }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.985 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.985 }}
-      transition={{ duration: 0.35, ease: "easeInOut" }}
-      className="flex flex-1 flex-col"
-    >
-      {children}
-    </motion.div>
-  );
-}
-
 export default function Home() {
   const capture = useAudioCapture();
   const { status: captureStatus, start: startCapture, reset: resetCapture } = capture;
   const [toast, setToast] = useState<string | null>(null);
   const history = useHistory();
   const [showHistory, setShowHistory] = useState(false);
+  const spotify = useSpotifyPlayback();
 
   const notify = useCallback((message: string) => setToast(message), []);
 
@@ -134,11 +83,21 @@ export default function Home() {
   // required. The idle screen stays tappable too, as a manual nudge.
   // Paused while History is open — the user asked for it to genuinely stop
   // listening while browsing past matches, not just skip the next cycle.
+  // Also paused while Spotify is actively reporting a playing track — user
+  // request: Spotify's own "now playing" replaces the mic entirely while
+  // it's actually playing something, no need to burn mic/ACRCloud calls.
   useEffect(() => {
-    if (captureStatus === "idle" && !showHistory) {
+    if (captureStatus === "idle" && !showHistory && !spotify.nowPlaying) {
       startCapture();
     }
-  }, [captureStatus, startCapture, showHistory]);
+  }, [captureStatus, startCapture, showHistory, spotify.nowPlaying]);
+
+  // If Spotify starts playing mid-recording (or mid-result), drop whatever
+  // the mic was doing immediately rather than letting it finish first —
+  // same reasoning as openHistory below.
+  useEffect(() => {
+    if (spotify.nowPlaying) resetCapture();
+  }, [spotify.nowPlaying, resetCapture]);
 
   const openHistory = useCallback(() => {
     setShowHistory(true);
@@ -146,14 +105,29 @@ export default function Home() {
     resetCapture();
   }, [resetCapture]);
 
+  const toggleSpotify = useCallback(() => {
+    if (spotify.connected) {
+      spotify.disconnect();
+    } else {
+      spotify.connect();
+    }
+  }, [spotify]);
+
   const showIdle =
-    capture.status === "idle" ||
-    capture.status === "requesting-permission" ||
-    capture.status === "recording";
+    !spotify.nowPlaying &&
+    (capture.status === "idle" ||
+      capture.status === "requesting-permission" ||
+      capture.status === "recording");
 
   return (
     <main className="relative flex flex-1 flex-col">
       <AnimatePresence mode="wait">
+        {spotify.nowPlaying && (
+          <Screen key={`spotify::${spotify.nowPlaying.title}::${spotify.nowPlaying.artist}`}>
+            <SpotifyTrackView nowPlaying={spotify.nowPlaying} onMatch={history.record} />
+          </Screen>
+        )}
+
         {showIdle && showHistory && (
           <Screen key="history">
             <HistoryScreen
@@ -171,6 +145,8 @@ export default function Home() {
               recording={capture.status === "recording"}
               disabled={capture.status === "requesting-permission"}
               onShowHistory={openHistory}
+              spotifyConnected={spotify.connected}
+              onToggleSpotify={toggleSpotify}
             />
           </Screen>
         )}

@@ -15,6 +15,8 @@ interface InfoScreenProps {
   lyricsDisabled?: boolean;
   progress: number;
   positionMs: number;
+  onSkipPrevious?: () => void;
+  onSkipNext?: () => void;
 }
 
 const textColumn = {
@@ -55,6 +57,8 @@ export function InfoScreen({
   lyricsDisabled,
   progress,
   positionMs,
+  onSkipPrevious,
+  onSkipNext,
 }: InfoScreenProps) {
   return (
     <div className="relative flex-1 w-full overflow-hidden">
@@ -138,6 +142,8 @@ export function InfoScreen({
         lyricsDisabled={lyricsDisabled}
         progress={progress}
         timeLabels={{ positionMs, durationMs: result.durationMs }}
+        onSkipPrevious={onSkipPrevious}
+        onSkipNext={onSkipNext}
       />
     </div>
   );

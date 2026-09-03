@@ -15,6 +15,8 @@ interface LyricsScreenProps {
   onShowSongInfo: () => void;
   onShowArtistInfo: () => void;
   progress: number;
+  onSkipPrevious?: () => void;
+  onSkipNext?: () => void;
 }
 
 /**
@@ -37,6 +39,8 @@ export function LyricsScreen({
   onShowSongInfo,
   onShowArtistInfo,
   progress,
+  onSkipPrevious,
+  onSkipNext,
 }: LyricsScreenProps) {
   const synced = useSyncedLyrics(syncedLines ?? [], positionMs);
   const hasSynced = Boolean(syncedLines && syncedLines.length > 0);
@@ -156,6 +160,8 @@ export function LyricsScreen({
         lyricsActive
         progress={progress}
         timeLabels={{ positionMs, durationMs: result.durationMs }}
+        onSkipPrevious={onSkipPrevious}
+        onSkipNext={onSkipNext}
       />
     </div>
   );

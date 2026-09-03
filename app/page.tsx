@@ -113,6 +113,18 @@ export default function Home() {
     }
   }, [spotify]);
 
+  const handleSkipPrevious = useCallback(() => {
+    spotify.skipPrevious().catch((error: unknown) => {
+      notify(error instanceof Error ? error.message : "Overslaan mislukt.");
+    });
+  }, [spotify, notify]);
+
+  const handleSkipNext = useCallback(() => {
+    spotify.skipNext().catch((error: unknown) => {
+      notify(error instanceof Error ? error.message : "Overslaan mislukt.");
+    });
+  }, [spotify, notify]);
+
   const showIdle =
     !spotify.nowPlaying &&
     (capture.status === "idle" ||
@@ -124,7 +136,12 @@ export default function Home() {
       <AnimatePresence mode="wait">
         {spotify.nowPlaying && (
           <Screen key={`spotify::${spotify.nowPlaying.title}::${spotify.nowPlaying.artist}`}>
-            <SpotifyTrackView nowPlaying={spotify.nowPlaying} onMatch={history.record} />
+            <SpotifyTrackView
+              nowPlaying={spotify.nowPlaying}
+              onMatch={history.record}
+              onSkipPrevious={handleSkipPrevious}
+              onSkipNext={handleSkipNext}
+            />
           </Screen>
         )}
 

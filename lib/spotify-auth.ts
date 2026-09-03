@@ -3,7 +3,12 @@ import { BASE_PATH } from "./base-path";
 const CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
 const AUTHORIZE_ENDPOINT = "https://accounts.spotify.com/authorize";
 const TOKEN_ENDPOINT = "https://accounts.spotify.com/api/token";
-const SCOPES = "user-read-currently-playing user-read-playback-state";
+// user-modify-playback-state is for the skip next/previous buttons — added
+// after the initial "show what's playing" version shipped, so anyone who
+// connected before this needs to reconnect once (a token only carries the
+// scopes it was originally granted; Spotify doesn't retroactively add new
+// ones to an existing grant).
+const SCOPES = "user-read-currently-playing user-read-playback-state user-modify-playback-state";
 
 const TOKENS_KEY = "spotify_tokens";
 const VERIFIER_KEY = "spotify_code_verifier";

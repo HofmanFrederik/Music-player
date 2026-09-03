@@ -66,13 +66,23 @@ function useLivePosition(nowPlaying: SpotifyNowPlaying, durationMs: number) {
  * - No "estimated duration ran out -> back to idle" effect. Spotify tells
  *   us directly when playback stops (nowPlaying goes null at the Home
  *   level), so there's nothing to estimate.
+ *
+ * onSkipPrevious/onSkipNext are always passed through to Info/Lyrics here
+ * (unlike TrackView, which never has them — mic-recognized matches aren't
+ * something this app controls playback of) — Home already wraps the raw
+ * Spotify API calls with error handling/a toast, so this component just
+ * forwards them as-is.
  */
 export function SpotifyTrackView({
   nowPlaying,
   onMatch,
+  onSkipPrevious,
+  onSkipNext,
 }: {
   nowPlaying: SpotifyNowPlaying;
   onMatch: (result: RecognitionResult) => void;
+  onSkipPrevious: () => void;
+  onSkipNext: () => void;
 }) {
   const [view, setView] = useState<ViewState>("info");
 
@@ -116,6 +126,8 @@ export function SpotifyTrackView({
             onShowSongInfo={() => setView("songInfo")}
             onShowArtistInfo={() => setView("artistInfo")}
             progress={progress}
+            onSkipPrevious={onSkipPrevious}
+            onSkipNext={onSkipNext}
           />
         </Screen>
       ) : view === "album" ? (
@@ -160,6 +172,8 @@ export function SpotifyTrackView({
             lyricsDisabled={lyricsDisabled}
             progress={progress}
             positionMs={positionMs}
+            onSkipPrevious={onSkipPrevious}
+            onSkipNext={onSkipNext}
           />
         </Screen>
       )}

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CirclePlus, Quote, Video } from "lucide-react";
+import { CirclePlus, Quote, SkipBack, SkipForward, Video } from "lucide-react";
 import { ProgressBar } from "./ProgressBar";
 import { formatElapsed, formatRemaining } from "@/lib/format";
 
@@ -54,6 +54,9 @@ interface BottomActionBarProps {
   progress: number;
   /** Elapsed/remaining labels below the bar — shown on both Info and Lyrics. */
   timeLabels?: { positionMs: number; durationMs: number } | null;
+  /** Only present for a Spotify-sourced match — mic-recognized tracks aren't something this app actually controls playback of. */
+  onSkipPrevious?: () => void;
+  onSkipNext?: () => void;
 }
 
 export function BottomActionBar({
@@ -63,6 +66,8 @@ export function BottomActionBar({
   lyricsActive = false,
   progress,
   timeLabels = null,
+  onSkipPrevious,
+  onSkipNext,
 }: BottomActionBarProps) {
   const spotifyUrl = spotifyTrackId ? `https://open.spotify.com/track/${spotifyTrackId}` : null;
 
@@ -77,6 +82,17 @@ export function BottomActionBar({
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
+          {onSkipPrevious && (
+            <button
+              type="button"
+              onClick={onSkipPrevious}
+              aria-label="Vorig nummer"
+              className="flex shrink-0 items-center justify-center text-white opacity-100 transition-opacity hover:opacity-80"
+            >
+              <SkipBack className="h-[clamp(20px,7.18vmin,38px)] w-[clamp(20px,7.18vmin,38px)]" strokeWidth={1.75} fill="currentColor" />
+            </button>
+          )}
+
           <ExternalIconLink href={spotifyUrl} label="Voeg toe aan Spotify">
             <CirclePlus className="h-[clamp(23px,8.21vmin,43px)] w-[clamp(23px,8.21vmin,43px)]" strokeWidth={1.5} />
           </ExternalIconLink>
@@ -96,6 +112,17 @@ export function BottomActionBar({
               fill={lyricsActive ? "currentColor" : "none"}
             />
           </button>
+
+          {onSkipNext && (
+            <button
+              type="button"
+              onClick={onSkipNext}
+              aria-label="Volgend nummer"
+              className="flex shrink-0 items-center justify-center text-white opacity-100 transition-opacity hover:opacity-80"
+            >
+              <SkipForward className="h-[clamp(20px,7.18vmin,38px)] w-[clamp(20px,7.18vmin,38px)]" strokeWidth={1.75} fill="currentColor" />
+            </button>
+          )}
         </div>
 
         <ProgressBar progress={progress} />
@@ -118,6 +145,8 @@ interface ActionButtonsProps {
   lyricsDisabled?: boolean;
   progress: number;
   timeLabels?: { positionMs: number; durationMs: number } | null;
+  onSkipPrevious?: () => void;
+  onSkipNext?: () => void;
 }
 
 /**
@@ -128,6 +157,9 @@ interface ActionButtonsProps {
  * progress bar, then elapsed/remaining time labels — shown on both screens
  * (per user direction: the icons shouldn't flank the bar). Missing ids
  * disable their button instead of hiding it, so the layout stays stable.
+ * Skip previous/next only appear when onSkipPrevious/onSkipNext are
+ * passed — a Spotify-sourced match only, since this app never controls
+ * playback for a mic-recognized one.
  *
  * Info/Idle have nothing else up top, so the video button can sit fixed at
  * right-8.8%/top-31px. The Lyrics screen's mini-player header occupies
@@ -146,6 +178,8 @@ export function ActionButtons({
   lyricsDisabled = false,
   progress,
   timeLabels = null,
+  onSkipPrevious,
+  onSkipNext,
 }: ActionButtonsProps) {
   return (
     <>
@@ -159,6 +193,8 @@ export function ActionButtons({
         lyricsDisabled={lyricsDisabled}
         progress={progress}
         timeLabels={timeLabels}
+        onSkipPrevious={onSkipPrevious}
+        onSkipNext={onSkipNext}
       />
     </>
   );

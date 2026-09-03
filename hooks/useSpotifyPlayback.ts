@@ -2,6 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { clearTokens, getStoredTokens, getValidAccessToken, startAuth } from "@/lib/spotify-auth";
+import { skipToNext, skipToPrevious } from "@/lib/spotify-playback";
+
+// Spotify's own state takes a moment to update after a skip command —
+// polling immediately often still shows the track that just ended. A
+// short delay before the extra poll makes the UI actually reflect the
+// new track most of the time; the regular interval is the safety net for
+// the rest.
+const POST_SKIP_POLL_DELAY_MS = 400;
 
 export interface SpotifyNowPlaying {
   title: string;
@@ -113,5 +121,15 @@ export function useSpotifyPlayback() {
     setNowPlaying(null);
   }, []);
 
-  return { connected, nowPlaying, connect, disconnect };
+  const skipNext = useCallback(async () => {
+    await skipToNext();
+    setTimeout(poll, POST_SKIP_POLL_DELAY_MS);
+  }, [poll]);
+
+  const skipPrevious = useCallback(async () => {
+    await skipToPrevious();
+    setTimeout(poll, POST_SKIP_POLL_DELAY_MS);
+  }, [poll]);
+
+  return { connected, nowPlaying, connect, disconnect, skipNext, skipPrevious };
 }

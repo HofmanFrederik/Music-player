@@ -56,10 +56,19 @@ function useLivePosition(nowPlaying: SpotifyNowPlaying, durationMs: number) {
  * Whether the current track is in the user's Liked Songs, and a toggle to
  * save/remove it — backs the like heart that replaces the "open in
  * Spotify" plus icon in Spotify mode. `liked` stays undefined (button
- * disabled) until the initial check resolves. The toggle updates
- * optimistically and reverts + reports the error via onError if the
- * actual API call fails, rather than waiting for a round trip before
- * reflecting the tap.
+ * disabled) only briefly, while the initial check is in flight. The
+ * toggle updates optimistically and reverts + reports the error via
+ * onError if the actual API call fails, rather than waiting for a round
+ * trip before reflecting the tap.
+ *
+ * A failed initial check (e.g. a stale token missing the scope this
+ * feature needs — see lib/spotify-auth.ts) falls back to `false` rather
+ * than leaving the button disabled forever: worst case that's a redundant
+ * save the next tap, which Spotify's API treats as a no-op, not actual
+ * wrong behavior — and it comes with a toast explaining why, instead of a
+ * silently dead button with no indication anything went wrong (the
+ * original version of this just left it stuck disabled with no message,
+ * confusing to debug from a user report alone).
  */
 function useLikedTrack(trackId: string | null, onError: (message: string) => void) {
   const [liked, setLiked] = useState<boolean | undefined>(undefined);
@@ -72,14 +81,16 @@ function useLikedTrack(trackId: string | null, onError: (message: string) => voi
       .then((saved) => {
         if (!cancelled) setLiked(saved);
       })
-      .catch(() => {
-        if (!cancelled) setLiked(undefined);
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        setLiked(false);
+        onError(error instanceof Error ? error.message : "Kon liked-status niet ophalen.");
       });
 
     return () => {
       cancelled = true;
     };
-  }, [trackId]);
+  }, [trackId, onError]);
 
   const toggle = useCallback(() => {
     if (!trackId || liked === undefined) return;

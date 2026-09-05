@@ -71,6 +71,15 @@ export default function Home() {
   const history = useHistory();
   const [showHistory, setShowHistory] = useState(false);
   const spotify = useSpotifyPlayback();
+  // Lifted above both the mic flow (which remounts TrackController on every
+  // idle->recording->recognized cycle) and the Spotify flow, so "lyrics on"
+  // is a standing preference rather than per-mount state: once toggled on,
+  // the next recognized/played song opens straight on lyrics too, instead
+  // of resetting to info the moment the current song ends and a new one
+  // starts (reported by the user — lyrics stayed on for background song
+  // changes within one match, per TrackController's own handleSongChanged,
+  // but not once the song actually finished and listening restarted).
+  const [lyricsPreferred, setLyricsPreferred] = useState(false);
 
   const notify = useCallback((message: string) => setToast(message), []);
 
@@ -152,6 +161,8 @@ export default function Home() {
               onSkipPrevious={handleSkipPrevious}
               onSkipNext={handleSkipNext}
               onError={notify}
+              lyricsPreferred={lyricsPreferred}
+              onLyricsPreferenceChange={setLyricsPreferred}
             />
           </Screen>
         )}
@@ -188,6 +199,8 @@ export default function Home() {
               onRetry={capture.reset}
               notify={notify}
               onMatch={history.record}
+              lyricsPreferred={lyricsPreferred}
+              onLyricsPreferenceChange={setLyricsPreferred}
             />
           </Screen>
         )}
@@ -214,12 +227,16 @@ function ResultView({
   onRetry,
   notify,
   onMatch,
+  lyricsPreferred,
+  onLyricsPreferenceChange,
 }: {
   blob: Blob;
   recordedAt: number;
   onRetry: () => void;
   notify: (message: string) => void;
   onMatch: (result: RecognitionResult) => void;
+  lyricsPreferred: boolean;
+  onLyricsPreferenceChange: (preferred: boolean) => void;
 }) {
   const recognition = useRecognition(blob);
 
@@ -246,6 +263,8 @@ function ResultView({
             initialRespondedAt={recognition.respondedAt}
             onRetry={onRetry}
             onMatch={onMatch}
+            lyricsPreferred={lyricsPreferred}
+            onLyricsPreferenceChange={onLyricsPreferenceChange}
           />
         </Screen>
       )}
@@ -274,19 +293,26 @@ function TrackController({
   initialRespondedAt,
   onRetry,
   onMatch,
+  lyricsPreferred,
+  onLyricsPreferenceChange,
 }: {
   initialResult: RecognitionResult;
   initialRecordedAt: number;
   initialRespondedAt: number;
   onRetry: () => void;
   onMatch: (result: RecognitionResult) => void;
+  lyricsPreferred: boolean;
+  onLyricsPreferenceChange: (preferred: boolean) => void;
 }) {
   const [match, setMatch] = useState<Match>({
     result: initialResult,
     recordedAt: initialRecordedAt,
     respondedAt: initialRespondedAt,
   });
-  const [view, setView] = useState<TrackViewState>("info");
+  // Read only once as the initial value: this mounts fresh per recognized
+  // song cycle, and by then it should follow the *current* standing
+  // preference, not react to it changing later while showing.
+  const [view, setView] = useState<TrackViewState>(() => (lyricsPreferred ? "lyrics" : "info"));
 
   const handleSongChanged = useCallback(
     (result: RecognitionResult, recordedAt: number, respondedAt: number) => {
@@ -310,6 +336,7 @@ function TrackController({
       onRetry={onRetry}
       onSongChanged={handleSongChanged}
       onMatch={onMatch}
+      onLyricsPreferenceChange={onLyricsPreferenceChange}
     />
   );
 }
@@ -323,6 +350,7 @@ function TrackView({
   onRetry,
   onSongChanged,
   onMatch,
+  onLyricsPreferenceChange,
 }: {
   result: RecognitionResult;
   recordedAt: number;
@@ -332,6 +360,7 @@ function TrackView({
   onRetry: () => void;
   onSongChanged: (result: RecognitionResult, recordedAt: number, respondedAt: number) => void;
   onMatch: (result: RecognitionResult) => void;
+  onLyricsPreferenceChange: (preferred: boolean) => void;
 }) {
   const { positionMs, progress, finished } = useTrackTimer({
     durationMs: result.durationMs,
@@ -376,7 +405,10 @@ function TrackView({
             positionMs={positionMs}
             syncedLines={lyrics.status === "ready" ? lyrics.syncedLines : null}
             plainLyrics={lyrics.status === "ready" ? lyrics.plainLyrics : null}
-            onToggleInfo={() => onViewChange("info")}
+            onToggleInfo={() => {
+              onViewChange("info");
+              onLyricsPreferenceChange(false);
+            }}
             onShowAlbum={() => onViewChange("album")}
             onShowSongInfo={() => onViewChange("songInfo")}
             onShowArtistInfo={() => onViewChange("artistInfo")}
@@ -418,7 +450,10 @@ function TrackView({
         <Screen key="info">
           <InfoScreen
             result={result}
-            onToggleLyrics={() => onViewChange("lyrics")}
+            onToggleLyrics={() => {
+              onViewChange("lyrics");
+              onLyricsPreferenceChange(true);
+            }}
             onShowAlbum={() => onViewChange("album")}
             onShowSongInfo={() => onViewChange("songInfo")}
             onShowArtistInfo={() => onViewChange("artistInfo")}

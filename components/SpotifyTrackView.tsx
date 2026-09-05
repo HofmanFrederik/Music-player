@@ -123,14 +123,22 @@ export function SpotifyTrackController({
   onSkipPrevious,
   onSkipNext,
   onError,
+  lyricsPreferred,
+  onLyricsPreferenceChange,
 }: {
   nowPlaying: SpotifyNowPlaying;
   onMatch: (result: RecognitionResult) => void;
   onSkipPrevious: () => void;
   onSkipNext: () => void;
   onError: (message: string) => void;
+  lyricsPreferred: boolean;
+  onLyricsPreferenceChange: (preferred: boolean) => void;
 }) {
-  const [view, setView] = useState<ViewState>("info");
+  // Only the very first mount (this component's own life, spanning every
+  // song poll — see class doc above) should seed itself from the standing
+  // preference; a song change goes through the effect below instead, which
+  // already knows whether to keep "lyrics" as-is.
+  const [view, setView] = useState<ViewState>(() => (lyricsPreferred ? "lyrics" : "info"));
   const songKey = `${nowPlaying.title}::${nowPlaying.artist}`;
 
   useEffect(() => {
@@ -153,6 +161,7 @@ export function SpotifyTrackController({
       onSkipPrevious={onSkipPrevious}
       onSkipNext={onSkipNext}
       onError={onError}
+      onLyricsPreferenceChange={onLyricsPreferenceChange}
     />
   );
 }
@@ -165,6 +174,7 @@ function SpotifyTrackView({
   onSkipPrevious,
   onSkipNext,
   onError,
+  onLyricsPreferenceChange,
 }: {
   nowPlaying: SpotifyNowPlaying;
   view: ViewState;
@@ -173,6 +183,7 @@ function SpotifyTrackView({
   onSkipPrevious: () => void;
   onSkipNext: () => void;
   onError: (message: string) => void;
+  onLyricsPreferenceChange: (preferred: boolean) => void;
 }) {
   const result: RecognitionResult = {
     title: nowPlaying.title,
@@ -210,7 +221,10 @@ function SpotifyTrackView({
             positionMs={positionMs}
             syncedLines={lyrics.status === "ready" ? lyrics.syncedLines : null}
             plainLyrics={lyrics.status === "ready" ? lyrics.plainLyrics : null}
-            onToggleInfo={() => onViewChange("info")}
+            onToggleInfo={() => {
+              onViewChange("info");
+              onLyricsPreferenceChange(false);
+            }}
             onShowAlbum={() => onViewChange("album")}
             onShowSongInfo={() => onViewChange("songInfo")}
             onShowArtistInfo={() => onViewChange("artistInfo")}
@@ -256,7 +270,10 @@ function SpotifyTrackView({
         <Screen key="info">
           <InfoScreen
             result={result}
-            onToggleLyrics={() => onViewChange("lyrics")}
+            onToggleLyrics={() => {
+              onViewChange("lyrics");
+              onLyricsPreferenceChange(true);
+            }}
             onShowAlbum={() => onViewChange("album")}
             onShowSongInfo={() => onViewChange("songInfo")}
             onShowArtistInfo={() => onViewChange("artistInfo")}
